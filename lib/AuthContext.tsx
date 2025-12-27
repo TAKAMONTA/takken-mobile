@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { auth } from './firebase';
+import { User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, deleteUser } from 'firebase/auth';
+import { auth, db } from './firebase';
+import { doc, deleteDoc, collection, query, where, getDocs } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
@@ -8,6 +9,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,8 +51,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const deleteAccount = async () => {
+    if (!user) {
+      throw new Error('ログインしていません');
+    }
+
+    try {
+      const uid = user.uid;
+
+      // Firestoreのデータを削除
+      // ユーザープロフィールを削除
+      await deleteDoc(doc(db, 'users', uid));
+
+      // 統計データを削除
+      await deleteDoc(doc(db, 'stats', uid));
+
+      // 学習記録を削除
+      const sessionsRef = collection(db, 'studySessions');
+      const q = query(sessionsRef, where('uid', '==', uid));
+      const querySnapshot = await getDocs(q);
+      const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+
+      // Firebase Authenticationのユーザーを削除
+      await deleteUser(user);
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, logout }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, logout, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );

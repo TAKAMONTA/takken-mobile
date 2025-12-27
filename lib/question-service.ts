@@ -118,6 +118,40 @@ export async function getRandomQuestions(count: number, category?: string): Prom
 }
 
 /**
+ * カテゴリごとの問題数を取得する
+ */
+export async function getQuestionCountByCategory(category: string): Promise<number> {
+  try {
+    const questionsRef = collection(db, 'questions');
+    const q = query(questionsRef, where('category', '==', category));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.size;
+  } catch (error) {
+    console.error('問題数の取得に失敗しました:', error);
+    return 0;
+  }
+}
+
+/**
+ * すべてのカテゴリの問題数を取得する
+ */
+export async function getAllQuestionCounts(): Promise<Record<string, number>> {
+  try {
+    const categories = ['takkengyouhou', 'minpou', 'hourei', 'zeihou'];
+    const counts: Record<string, number> = {};
+    
+    for (const category of categories) {
+      counts[category] = await getQuestionCountByCategory(category);
+    }
+    
+    return counts;
+  } catch (error) {
+    console.error('問題数の取得に失敗しました:', error);
+    return {};
+  }
+}
+
+/**
  * カテゴリ情報
  */
 export const categoryInfo: Record<string, { name: string; description: string; icon: string; count: number }> = {

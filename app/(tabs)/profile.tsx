@@ -4,7 +4,7 @@ import { useAuth } from '../../lib/AuthContext';
 import { ZenColors, Spacing, FontSize, BorderRadius, Shadow } from '../../constants/Colors';
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
 
   const handleLogout = () => {
     Alert.alert(
@@ -18,6 +18,29 @@ export default function ProfileScreen() {
           onPress: async () => {
             await logout();
             router.replace('/');
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'アカウント削除',
+      '本当にアカウントを削除しますか？この操作は元に戻せません。すべての学習データが削除されます。',
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        {
+          text: '削除',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteAccount();
+              Alert.alert('完了', 'アカウントを削除しました');
+              router.replace('/');
+            } catch (error: any) {
+              Alert.alert('エラー', error.message);
+            }
           },
         },
       ]
@@ -108,6 +131,19 @@ export default function ProfileScreen() {
             onPress={handleLogout}
           >
             <Text style={styles.logoutText}>ログアウト</Text>
+          </Pressable>
+        </View>
+
+        {/* 退会 */}
+        <View style={styles.section}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.deleteButton,
+              pressed && styles.deleteButtonPressed,
+            ]}
+            onPress={handleDeleteAccount}
+          >
+            <Text style={styles.deleteText}>アカウントを削除</Text>
           </Pressable>
         </View>
 
@@ -227,6 +263,21 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     color: ZenColors.error,
+    fontSize: FontSize.md,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    backgroundColor: ZenColors.error,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
+  },
+  deleteButtonPressed: {
+    opacity: 0.8,
+  },
+  deleteText: {
+    color: ZenColors.text.inverse,
     fontSize: FontSize.md,
     fontWeight: '600',
   },

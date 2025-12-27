@@ -1,5 +1,7 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
+import { getAllQuestionCounts } from '../../lib/question-service';
 import { ZenColors, Spacing, FontSize, BorderRadius, Shadow } from '../../constants/Colors';
 
 const categories = [
@@ -38,6 +40,36 @@ const categories = [
 ];
 
 export default function PracticeScreen() {
+  const [questionCounts, setQuestionCounts] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadQuestionCounts();
+  }, []);
+
+  const loadQuestionCounts = async () => {
+    try {
+      const counts = await getAllQuestionCounts();
+      setQuestionCounts(counts);
+    } catch (error) {
+      console.error('問題数の読み込みに失敗しました:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCategoryCount = (categoryId: string): number => {
+    return questionCounts[categoryId] || 0;
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color={ZenColors.primary} />
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
@@ -67,7 +99,7 @@ export default function PracticeScreen() {
                   {category.description}
                 </Text>
                 <Text style={styles.categoryCount}>
-                  {category.questionCount}問
+                  {getCategoryCount(category.id)}問
                 </Text>
               </View>
             </Pressable>
@@ -123,6 +155,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: ZenColors.background,
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     padding: Spacing.lg,

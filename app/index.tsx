@@ -1,8 +1,27 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import { useEffect } from 'react';
 import { router } from 'expo-router';
+import { useAuth } from '../lib/AuthContext';
 import { ZenColors, Spacing, FontSize, BorderRadius, Shadow } from '../constants/Colors';
 
 export default function HomeScreen() {
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      // ログイン済みの場合はダッシュボードにリダイレクト
+      router.replace('/(tabs)');
+    }
+  }, [user, loading]);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color={ZenColors.primary} />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -55,6 +74,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: ZenColors.background,
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     flex: 1,
