@@ -104,7 +104,7 @@ export default function HomeScreen() {
                   <Text style={styles.featureEmoji}>🤖</Text>
                   <Text style={styles.featureTitle}>AI予想問題</Text>
                   <Text style={styles.featureDescription}>
-                    800-1000問の厳選された問題で効率的に学習
+                    500問の厳選された問題で効率的に学習
                   </Text>
                 </View>
 

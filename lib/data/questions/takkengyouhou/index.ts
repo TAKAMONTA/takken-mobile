@@ -40,12 +40,18 @@ import { takkengyouhouAdvancedQuestions_RewardLimit } from "./generated-50/advan
 // 追加問題
 import { takkengyouhouAdditionalQuestions_20241026 } from "./additional-20241026";
 import { takkengyouhouAdditionalQuestions_20241219 } from "./additional-20241219";
+import { takkengyouhouAdditionalQuestions_20241219_phase2 } from "./additional-20241219-phase2";
 import { takkengyouhouAdditionalQuestions_20251101 } from "./additional-2025-11-01";
 import { takkengyouhouAdditionalQuestions_20251101_batch1 } from "./additional-2025-11-01-batch1";
 import { takkengyouhouAdditionalQuestions_20251101_batch2 } from "./additional-2025-11-01-batch2";
 import { takkengyouhouAdditionalQuestions_20251101_batch3 } from "./additional-2025-11-01-batch3";
 import { takkengyouhouAdditionalQuestions_20251101_batch4 } from "./additional-2025-11-01-batch4";
 import { takkengyouhouAdditionalQuestions_20251101_batch5 } from "./additional-2025-11-01-batch5";
+import { takkengyouhouAdditionalQuestions_20251101_batch6 } from "./additional-2025-11-01-batch6";
+
+// AI生成問題
+import { takkengyouhouNewQuestions } from "./ai-generated-1";
+import { takkengyouhouNewQuestions2 } from "./ai-generated-2";
 
 // 基礎問題（肢別形式）を多肢選択形式に変換する関数
 function convertTrueFalseToQuestion(
@@ -107,12 +113,17 @@ export const takkengyouhouQuestions: Question[] = [
   // 追加問題
   ...takkengyouhouAdditionalQuestions_20241026,
   ...takkengyouhouAdditionalQuestions_20241219,
+  ...takkengyouhouAdditionalQuestions_20241219_phase2,
   ...takkengyouhouAdditionalQuestions_20251101,
   ...takkengyouhouAdditionalQuestions_20251101_batch1,
   ...takkengyouhouAdditionalQuestions_20251101_batch2,
   ...takkengyouhouAdditionalQuestions_20251101_batch3,
   ...takkengyouhouAdditionalQuestions_20251101_batch4,
   ...takkengyouhouAdditionalQuestions_20251101_batch5,
+  ...takkengyouhouAdditionalQuestions_20251101_batch6,
+  // AI生成問題
+  ...takkengyouhouNewQuestions,
+  ...takkengyouhouNewQuestions2,
 ];
 
 // 難易度別の問題数統計

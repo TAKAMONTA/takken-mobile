@@ -41,12 +41,17 @@ import { minpouAdvancedQuestions_相続 } from "./generated-50/advanced-9";
 // 追加問題
 import { minpouAdditionalQuestions_20241026 } from "./additional-20241026";
 import { minpouAdditionalQuestions_20241219 } from "./additional-20241219";
+import { minpouAdditionalQuestions_20241219_phase2 } from "./additional-20241219-phase2";
 import { minpouAdditionalQuestions_20251101_batch1 } from "./additional-2025-11-01-batch1";
 import { minpouAdditionalQuestions_20251101_batch2 } from "./additional-2025-11-01-batch2";
 import { minpouAdditionalQuestions_20251101_batch3 } from "./additional-2025-11-01-batch3";
 import { minpouAdditionalQuestions_20251101_batch4 } from "./additional-2025-11-01-batch4";
 import { minpouAdditionalQuestions_20251101_batch5 } from "./additional-2025-11-01-batch5";
 import { minpouAdditionalQuestions_20251101_batch6 } from "./additional-2025-11-01-batch6";
+
+// AI生成問題
+import { minpouNewQuestions } from "./ai-generated-1";
+import { minpouNewQuestions2 } from "./ai-generated-2";
 
 // 基礎問題（肢別形式）を多肢選択形式に変換する関数
 function convertTrueFalseToQuestion(
@@ -109,12 +114,16 @@ export const minpouQuestions: Question[] = [
   // 追加問題
   ...minpouAdditionalQuestions_20241026,
   ...minpouAdditionalQuestions_20241219,
+  ...minpouAdditionalQuestions_20241219_phase2,
   ...minpouAdditionalQuestions_20251101_batch1,
   ...minpouAdditionalQuestions_20251101_batch2,
   ...minpouAdditionalQuestions_20251101_batch3,
   ...minpouAdditionalQuestions_20251101_batch4,
   ...minpouAdditionalQuestions_20251101_batch5,
   ...minpouAdditionalQuestions_20251101_batch6,
+  // AI生成問題
+  ...minpouNewQuestions,
+  ...minpouNewQuestions2,
 ];
 
 // 難易度別の問題数統計

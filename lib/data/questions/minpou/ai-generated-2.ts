@@ -1,7 +1,7 @@
 // 民法等の問題データ
 import { Question } from '@/lib/types/quiz';
 
-export const minpouNewQuestions: Question[] = [
+export const minpouNewQuestions2: Question[] = [
   {
     "id": 605,
     "question": "民法における意思表示に関する次の記述のうち、正しいものはどれか。",

@@ -1,7 +1,7 @@
 // 宅建業法の問題データ
 import { Question } from '@/lib/types/quiz';
 
-export const takkengyouhouNewQuestions: Question[] = [
+export const takkengyouhouNewQuestions2: Question[] = [
   {
     "id": 505,
     "question": "宅地建物取引業者に関する次の記述のうち、正しいものはどれか。",
