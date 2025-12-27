@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, deleteUser } from 'firebase/auth';
+import { User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, deleteUser, signInAnonymously } from 'firebase/auth';
 import { auth, db } from './firebase';
 import { doc, deleteDoc, collection, query, where, getDocs } from 'firebase/firestore';
 
@@ -8,6 +8,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
+  signInAnonymously: () => Promise<void>;
   logout: () => Promise<void>;
   deleteAccount: () => Promise<void>;
 }
@@ -38,6 +39,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string) => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
+  };
+
+  const signInAnonymouslyFunc = async () => {
+    try {
+      await signInAnonymously(auth);
     } catch (error: any) {
       throw new Error(error.message);
     }
@@ -81,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, logout, deleteAccount }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signInAnonymously: signInAnonymouslyFunc, logout, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );
