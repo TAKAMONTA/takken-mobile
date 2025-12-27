@@ -72,6 +72,17 @@ export default function QuestionScreen() {
     // Firestoreに学習記録を保存
     if (user) {
       const timeSpent = Math.floor((new Date().getTime() - startTime.getTime()) / 1000);
+      
+      // デバッグログ
+      console.log('Current question:', currentQuestion);
+      console.log('Question ID:', currentQuestion.id);
+      
+      // questionIdがundefinedの場合はスキップ
+      if (!currentQuestion.id) {
+        console.error('Question ID is undefined, skipping save');
+        return;
+      }
+      
       try {
         await saveStudySession({
           uid: user.uid,
@@ -82,6 +93,7 @@ export default function QuestionScreen() {
           isCorrect,
           timeSpent,
         });
+        console.log('Study session saved successfully');
       } catch (error) {
         console.error('Error saving study session:', error);
       }
