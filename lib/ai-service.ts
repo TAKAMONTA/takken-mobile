@@ -3,98 +3,6 @@ import { Question } from './types';
 // OpenAI APIを使用したAI解説生成
 // 環境変数: EXPO_PUBLIC_OPENAI_API_KEY
 
-export interface AIExplanationRequest {
-  question: Question;
-  userAnswer: number;
-  isCorrect: boolean;
-}
-
-export interface AIExplanationResponse {
-  explanation: string;
-  tips: string[];
-  relatedTopics: string[];
-}
-
-export async function generateAIExplanation(
-  request: AIExplanationRequest
-): Promise<AIExplanationResponse> {
-  const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('OpenAI API key is not configured');
-  }
-
-  const { question, userAnswer, isCorrect } = request;
-
-  const prompt = `
-あなたは宅建試験の専門家です。以下の問題について、詳しい解説を提供してください。
-
-【問題】
-${question.question}
-
-【選択肢】
-${question.choices.map((choice, index) => `${index + 1}. ${choice}`).join('\n')}
-
-【正解】
-${question.correctAnswer + 1}. ${question.choices[question.correctAnswer]}
-
-【受験者の回答】
-${userAnswer + 1}. ${question.choices[userAnswer]}
-
-【結果】
-${isCorrect ? '正解' : '不正解'}
-
-以下の形式でJSON形式で回答してください：
-{
-  "explanation": "詳しい解説（なぜこの選択肢が正解/不正解なのか、法律の根拠など）",
-  "tips": ["学習のポイント1", "学習のポイント2", "学習のポイント3"],
-  "relatedTopics": ["関連トピック1", "関連トピック2"]
-}
-`;
-
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'あなたは宅建試験の専門家です。受験者の理解を深めるために、わかりやすく詳しい解説を提供してください。',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        response_format: { type: 'json_object' },
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices[0].message.content;
-    const result = JSON.parse(content);
-
-    return {
-      explanation: result.explanation || '解説を生成できませんでした。',
-      tips: result.tips || [],
-      relatedTopics: result.relatedTopics || [],
-    };
-  } catch (error) {
-    console.error('AI explanation generation error:', error);
-    throw error;
-  }
-}
-
 // AI先生チャット機能
 export interface AIChatMessage {
   role: 'user' | 'assistant';
@@ -342,23 +250,41 @@ ${originalExplanation}
 
 400文字以内で簡潔に説明してください。`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4.1-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'あなたは宅建試験の専門講師です。受験生が理解しやすいように、わかりやすく丁寧に解説してください。',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 1000,
+    const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('OpenAI API key is not configured');
+    }
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4.1-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'あなたは宅建試験の専門講師です。受験生が理解しやすいように、わかりやすく丁寧に解説してください。',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 1000,
+      }),
     });
 
-    return response.choices[0]?.message?.content || '解説の生成に失敗しました。';
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    return data.choices[0]?.message?.content || '解説の生成に失敗しました。';
   } catch (error) {
     console.error('Error generating AI explanation:', error);
     throw new Error('AI解説の生成に失敗しました');
@@ -391,23 +317,41 @@ ${stats.categoryStats.map(cat => `- ${cat.category}: ${cat.count}問、正答率
 
 200文字以内で簡潔にアドバイスしてください。`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4.1-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'あなたは宅建試験の学習アドバイザーです。受験生の学習状況を分析し、効果的な学習方法を提案してください。',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 500,
+    const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('OpenAI API key is not configured');
+    }
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4.1-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'あなたは宅建試験の学習アドバイザーです。受験生の学習状況を分析し、効果的な学習方法を提案してください。',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      }),
     });
 
-    return response.choices[0]?.message?.content || 'アドバイスの生成に失敗しました。';
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    return data.choices[0]?.message?.content || 'アドバイスの生成に失敗しました。';
   } catch (error) {
     console.error('Error generating study advice:', error);
     throw new Error('学習アドバイスの生成に失敗しました');
@@ -440,23 +384,41 @@ ${i + 1}. カテゴリ: ${q.category}
 
 300文字以内で分析結果を提示してください。`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4.1-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'あなたは宅建試験の分析専門家です。受験生の間違いパターンを分析し、効果的な改善方法を提案してください。',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 800,
+    const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('OpenAI API key is not configured');
+    }
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4.1-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'あなたは宅建試験の分析専門家です。受験生の間違いパターンを分析し、効果的な改善方法を提案してください。',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 800,
+      }),
     });
 
-    return response.choices[0]?.message?.content || '分析に失敗しました。';
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    return data.choices[0]?.message?.content || '分析に失敗しました。';
   } catch (error) {
     console.error('Error analyzing weaknesses:', error);
     throw new Error('弱点分析に失敗しました');
@@ -491,23 +453,41 @@ ${userQuestion}
 
 わかりやすく丁寧に回答してください（200文字以内）。`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4.1-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'あなたは宅建試験の専門講師です。受験生の質問に対して、わかりやすく丁寧に回答してください。',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 500,
+    const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('OpenAI API key is not configured');
+    }
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4.1-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'あなたは宅建試験の専門講師です。受験生の質問に対して、わかりやすく丁寧に回答してください。',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      }),
     });
 
-    return response.choices[0]?.message?.content || '回答の生成に失敗しました。';
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    return data.choices[0]?.message?.content || '回答の生成に失敗しました。';
   } catch (error) {
     console.error('Error asking AI question:', error);
     throw new Error('AI質問の回答に失敗しました');
