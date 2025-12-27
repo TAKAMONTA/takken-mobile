@@ -1,0 +1,401 @@
+{
+  "takkengyouhou": {
+    "name": "宅建業法",
+    "total": 60,
+    "difficulty": {
+      "基礎": 0,
+      "標準": 60,
+      "応用": 0
+    },
+    "topics": {
+      "免許制度": 10,
+      "広告規制": 6,
+      "業務規制、監督・罰則": 10,
+      "自ら売主制限（8種制限）": 10,
+      "37条書面": 6,
+      "宅地建物取引士": 10,
+      "報酬制限": 4,
+      "営業保証金・保証協会": 4
+    },
+    "avgQuestionLength": 42,
+    "avgChoiceLength": 16,
+    "avgExplanationLength": 45,
+    "questions": [
+      {
+        "id": "1Gpm9gqbxT2RsRkY4Wbe",
+        "createdAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 647000000
+        },
+        "topic": "免許制度",
+        "choices": [
+          "免許の取消しまたは停止処分が行われることがある",
+          "欠格事由該当は問題とならず、特に処分はない",
+          "ただし書き免許へ切り替えられる",
+          "指導・助言にとどまり、免許の効力は継続される"
+        ],
+        "year": "2025",
+        "correctAnswer": 0,
+        "updatedAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 647000000
+        },
+        "explanation": "欠格事由該当が判明すると免許取消しや停止処分の対象となります。",
+        "question": "宅建業者が免許を受けた後に欠格事由に該当した場合の行政処分として適切なものはどれか。",
+        "difficulty": "標準",
+        "category": "takkengyouhou"
+      },
+      {
+        "id": "1auYYUWLyxBt96PIe2ps",
+        "updatedAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 652000000
+        },
+        "createdAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 652000000
+        },
+        "explanation": "売主が手数料を負担し、買主に手数料を請求しない場合に限り表示可能です。",
+        "difficulty": "標準",
+        "question": "宅建業者が広告において「仲介手数料無料」と表示できるのはどのケースか。",
+        "category": "takkengyouhou",
+        "correctAnswer": 0,
+        "choices": [
+          "売主が手数料を負担する場合",
+          "買主が手数料を負担する場合",
+          "仲介手数料が発生しない物件の場合のみ",
+          "手数料の有無に関係なく自由に表示できる"
+        ],
+        "topic": "広告規制",
+        "year": "2025"
+      },
+      {
+        "id": "1kYfnPYWFl7oaSux2g0D",
+        "createdAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 654000000
+        },
+        "explanation": "重要事項説明書の誤記載が判明した場合は速やかに訂正し、関係者に正確な情報を説明する義務がある。",
+        "question": "宅建業者が重要事項説明書の記載内容を誤っていた場合、正しい対応はどれか。",
+        "choices": [
+          "速やかに訂正し、関係者に説明しなければならない",
+          "訂正は必要ないが関係者に通知すればよい",
+          "訂正も説明も不要である",
+          "監督官庁に報告するだけでよい"
+        ],
+        "correctAnswer": 0,
+        "difficulty": "標準",
+        "year": "2025",
+        "category": "takkengyouhou",
+        "updatedAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 654000000
+        },
+        "topic": "業務規制、監督・罰則"
+      }
+    ]
+  },
+  "minpou": {
+    "name": "民法等",
+    "total": 20,
+    "difficulty": {
+      "基礎": 0,
+      "標準": 20,
+      "応用": 0
+    },
+    "topics": {
+      "意思表示": 4,
+      "制限行為能力者": 6,
+      "相続": 4,
+      "借地借家法": 3,
+      "区分所有法": 3
+    },
+    "avgQuestionLength": 47,
+    "avgChoiceLength": 13,
+    "avgExplanationLength": 46,
+    "questions": [
+      {
+        "id": "1zA8JXRvXcydJrkCsTee",
+        "category": "minpou",
+        "updatedAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 655000000
+        },
+        "year": "2025",
+        "choices": [
+          "表示の内容に錯誤がある場合で、その錯誤が合理的で重要なものであるとき",
+          "表示の内容に錯誤があっても、相手方が善意の場合は取り消せない",
+          "錯誤は全て取り消せない",
+          "錯誤があっても取り消すには裁判所の許可が必要"
+        ],
+        "correctAnswer": 0,
+        "question": "意思表示の錯誤に関して、瑕疵ある意思表示が取り消せるのはどのような場合か？",
+        "difficulty": "標準",
+        "explanation": "意思表示の錯誤は、その錯誤が合理的かつ重要なものであれば、取り消すことができる。",
+        "topic": "意思表示",
+        "createdAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 655000000
+        }
+      },
+      {
+        "id": "5G1FYC51zvJl3V0Dln6e",
+        "choices": [
+          "常に無効である",
+          "取り消すことができる",
+          "有効と推定される",
+          "成年後見人の同意がなければ無効"
+        ],
+        "correctAnswer": 2,
+        "category": "minpou",
+        "createdAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 655000000
+        },
+        "difficulty": "標準",
+        "explanation": "制限行為能力者の通常の生活に関する契約は有効と推定されるため、取り消しはできない場合が多い。",
+        "question": "制限行為能力者が単独で行った契約のうち、日常生活に関する通常の取引はどう扱われるか？",
+        "topic": "制限行為能力者",
+        "updatedAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 655000000
+        },
+        "year": "2025"
+      },
+      {
+        "id": "86QlYxDmBu8Dzc03QqdT",
+        "difficulty": "標準",
+        "year": "2025",
+        "choices": [
+          "契約は常に有効となる",
+          "契約は取り消すことができる場合がある",
+          "契約は最初から無効である",
+          "契約は家庭裁判所の許可があれば有効となる"
+        ],
+        "explanation": "成年被補助人の契約は補助人の同意が必要だが、同意がない場合でも一定の場合に取り消すことができる。",
+        "category": "minpou",
+        "createdAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 655000000
+        },
+        "correctAnswer": 1,
+        "topic": "制限行為能力者",
+        "question": "成年被補助人が補助人の同意なく行った契約について、正しい説明はどれか？",
+        "updatedAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 655000000
+        }
+      }
+    ]
+  },
+  "hourei": {
+    "name": "法令上の制限",
+    "total": 20,
+    "difficulty": {
+      "基礎": 0,
+      "標準": 20,
+      "応用": 0
+    },
+    "topics": {
+      "都市計画法": 5,
+      "土地区画整理法": 5,
+      "建築基準法": 5,
+      "農地法": 5
+    },
+    "avgQuestionLength": 33,
+    "avgChoiceLength": 11,
+    "avgExplanationLength": 46,
+    "questions": [
+      {
+        "id": "0R4KgRNbPUYp6Wd5iEnR",
+        "updatedAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 658000000
+        },
+        "createdAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 658000000
+        },
+        "explanation": "無指定区域は用途地域の指定がされていない区域であり、用途規制がないため建築制限が緩やかです。",
+        "difficulty": "標準",
+        "question": "都市計画法における用途地域の指定がされていない区域はどれか。",
+        "category": "hourei",
+        "correctAnswer": 0,
+        "choices": [
+          "無指定区域",
+          "市街化区域",
+          "市街化調整区域",
+          "準都市計画区域"
+        ],
+        "topic": "都市計画法",
+        "year": "2025"
+      },
+      {
+        "id": "9IZPiJLgTdGhEH2lvSJs",
+        "difficulty": "標準",
+        "topic": "土地区画整理法",
+        "question": "土地区画整理法において、施行地区内の土地所有者が負担する費用を何というか。",
+        "correctAnswer": 0,
+        "year": "2025",
+        "createdAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 663000000
+        },
+        "updatedAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 663000000
+        },
+        "category": "hourei",
+        "explanation": "負担金とは、区画整理事業の費用を施行地区内の土地所有者が負担するための費用である。",
+        "choices": [
+          "負担金",
+          "施行費用",
+          "譲渡金",
+          "換地手数料"
+        ]
+      },
+      {
+        "id": "9sH4FqT1opuFjoWdQKVf",
+        "explanation": "一定規模以上（原則500㎡超）の土地の形質変更や宅地造成には開発許可が必要ですが、小規模な増改築や内装工事、耕作は対象外です。",
+        "question": "都市計画法に基づく開発許可が必要な行為はどれか。",
+        "category": "hourei",
+        "topic": "都市計画法",
+        "correctAnswer": 0,
+        "updatedAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 662000000
+        },
+        "choices": [
+          "1000㎡の宅地造成",
+          "住宅の増改築（100㎡未満）",
+          "既存建築物の内装工事",
+          "農地の単純な耕作"
+        ],
+        "difficulty": "標準",
+        "year": "2025",
+        "createdAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 662000000
+        }
+      }
+    ]
+  },
+  "zeihou": {
+    "name": "税・その他",
+    "total": 20,
+    "difficulty": {
+      "基礎": 0,
+      "標準": 20,
+      "応用": 0
+    },
+    "topics": {
+      "所得税": 4,
+      "宅地建物の統計": 3,
+      "地価公示法": 4,
+      "登録免許税": 3,
+      "不動産鑑定評価": 3,
+      "印紙税": 3
+    },
+    "avgQuestionLength": 34,
+    "avgChoiceLength": 11,
+    "avgExplanationLength": 40,
+    "questions": [
+      {
+        "id": "3Bi9pNXeUJ6OtZrzpsQl",
+        "choices": [
+          "固定資産税",
+          "借入金の利息",
+          "借入金の元本返済額",
+          "管理費"
+        ],
+        "topic": "所得税",
+        "correctAnswer": 2,
+        "question": "不動産の賃貸料所得にかかる所得税の計算で必要経費に含まれないものはどれか。",
+        "difficulty": "標準",
+        "year": "2025",
+        "explanation": "借入金の元本返済は資産の購入や返済であり、必要経費には含まれませんが利息は経費になります。",
+        "category": "zeihou",
+        "createdAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 666000000
+        },
+        "updatedAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 666000000
+        }
+      },
+      {
+        "id": "3VJQQImtQs48me9tdl1H",
+        "explanation": "建物の新設着工統計は国土交通省が毎月公表している主要な統計です。",
+        "createdAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 667000000
+        },
+        "updatedAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 667000000
+        },
+        "choices": [
+          "建物の新設着工統計は国土交通省が毎月公表している",
+          "宅地の価格動向は税務署が毎年発表する",
+          "不動産鑑定評価に統計データは直接使用されない",
+          "地価公示は農地の価格を主に示す"
+        ],
+        "topic": "宅地建物の統計",
+        "category": "zeihou",
+        "year": "2025",
+        "difficulty": "標準",
+        "correctAnswer": 0,
+        "question": "宅地建物の統計に関する記述で正しいものはどれか。"
+      },
+      {
+        "id": "4eILPKfxTgRF26kSRPa8",
+        "createdAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 666000000
+        },
+        "year": "2025",
+        "category": "zeihou",
+        "difficulty": "標準",
+        "correctAnswer": 1,
+        "question": "地価公示法で定める「標準地」に関して正しい記述はどれか。",
+        "updatedAt": {
+          "type": "firestore/timestamp/1.0",
+          "seconds": 1766811638,
+          "nanoseconds": 666000000
+        },
+        "explanation": "標準地は地域を代表する土地として選定され、その価格が公示されます。価格は毎年見直されます。",
+        "topic": "地価公示法",
+        "choices": [
+          "全国の宅地のうち、無作為に選定される",
+          "地域の代表的な土地の価格を示すために選定される",
+          "私有地のみが対象となる",
+          "価格は3年に一度見直される"
+        ]
+      }
+    ]
+  }
+}
