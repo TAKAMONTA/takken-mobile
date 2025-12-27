@@ -20,7 +20,7 @@ export async function getQuestionsByCategory(category: string): Promise<Question
     querySnapshot.forEach((doc) => {
       const data = doc.data();
       questions.push({
-        id: data.id,
+        id: doc.id,
         question: data.question,
         choices: data.choices,
         correctAnswer: data.correctAnswer,
@@ -53,7 +53,7 @@ export async function getAllQuestions(): Promise<Question[]> {
     querySnapshot.forEach((doc) => {
       const data = doc.data();
       questions.push({
-        id: data.id,
+        id: doc.id,
         question: data.question,
         choices: data.choices,
         correctAnswer: data.correctAnswer,
@@ -96,7 +96,7 @@ export async function getRandomQuestions(count: number, category?: string): Prom
     querySnapshot.forEach((doc) => {
       const data = doc.data();
       questions.push({
-        id: data.id,
+        id: doc.id,
         question: data.question,
         choices: data.choices,
         correctAnswer: data.correctAnswer,
