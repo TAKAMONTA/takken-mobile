@@ -80,3 +80,17 @@ export interface StudySession {
   rank?: string;
   totalQuestions?: number;
 }
+
+// 問題データ
+export interface Question {
+  id: number;
+  question: string;
+  choices: string[];  // options から choices に変更
+  correctAnswer: number;
+  explanation: string;
+  category: string;
+  difficulty?: string;
+  year?: string;
+  topic?: string;
+  tags?: string[];
+}
