@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { Question } from './types';
 
@@ -154,6 +154,33 @@ export async function getAllQuestionCounts(): Promise<Record<string, number>> {
 /**
  * カテゴリ情報
  */
+// IDで問題を取得
+export async function getQuestionById(questionId: string): Promise<Question | null> {
+  try {
+    const questionDoc = await getDoc(doc(db, 'questions', questionId));
+    
+    if (!questionDoc.exists()) {
+      return null;
+    }
+
+    const data = questionDoc.data();
+    return {
+      id: questionDoc.id,
+      category: data.category,
+      question: data.question,
+      choices: data.choices,
+      correctAnswer: data.correctAnswer,
+      explanation: data.explanation,
+      difficulty: data.difficulty || 'normal',
+      year: data.year || 2024,
+      tags: data.tags || [],
+    };
+  } catch (error) {
+    console.error('Error getting question by ID:', error);
+    return null;
+  }
+}
+
 export const categoryInfo: Record<string, { name: string; description: string; icon: string; count: number }> = {
   takkengyouhou: {
     name: '宅建業法',

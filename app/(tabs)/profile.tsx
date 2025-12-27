@@ -1,10 +1,27 @@
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { useAuth } from '../../lib/AuthContext';
+import { getUserProfile, UserProfile } from '../../lib/firestore-service';
 import { ZenColors, Spacing, FontSize, BorderRadius, Shadow } from '../../constants/Colors';
 
 export default function ProfileScreen() {
   const { user, logout, deleteAccount } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    loadProfile();
+  }, [user]);
+
+  const loadProfile = async () => {
+    if (!user) return;
+    try {
+      const userProfile = await getUserProfile(user.uid);
+      setProfile(userProfile);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -59,29 +76,37 @@ export default function ProfileScreen() {
               </Text>
             </View>
             <Text style={styles.email}>{user?.email}</Text>
-            <Text style={styles.plan}>無料プラン</Text>
+            {profile?.isPremium ? (
+              <View style={styles.premiumBadge}>
+                <Text style={styles.premiumBadgeText}>✨ プレミアム会員</Text>
+              </View>
+            ) : (
+              <Text style={styles.plan}>無料プラン</Text>
+            )}
           </View>
         </View>
 
         {/* プレミアムプラン */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>プレミアムプラン</Text>
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>プレミアムにアップグレード</Text>
-            <Text style={styles.cardDescription}>
-              AI機能無制限、全問題アクセス、広告非表示など、すべての機能が使い放題
-            </Text>
-            <Pressable
-              style={({ pressed }) => [
-                styles.button,
-                pressed && styles.buttonPressed,
-              ]}
-              onPress={() => router.push('/subscription')}
-            >
-              <Text style={styles.buttonText}>月額￥980で始める</Text>
-            </Pressable>
+        {!profile?.isPremium && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>プレミアムプラン</Text>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>プレミアムにアップグレード</Text>
+              <Text style={styles.cardDescription}>
+                AI機能無制限、全問題アクセス、広告非表示など、すべての機能が使い放題
+              </Text>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.button,
+                  pressed && styles.buttonPressed,
+                ]}
+                onPress={() => router.push('/subscription')}
+              >
+                <Text style={styles.buttonText}>月額￥980で始める</Text>
+              </Pressable>
+            </View>
           </View>
-        </View>
+        )}
 
         {/* 設定 */}
         <View style={styles.section}>
@@ -205,6 +230,18 @@ const styles = StyleSheet.create({
   plan: {
     fontSize: FontSize.md,
     color: ZenColors.text.secondary,
+  },
+  premiumBadge: {
+    backgroundColor: '#FFD700',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.full,
+    marginTop: Spacing.xs,
+  },
+  premiumBadgeText: {
+    fontSize: FontSize.md,
+    fontWeight: '700',
+    color: '#000',
   },
   cardTitle: {
     fontSize: FontSize.lg,

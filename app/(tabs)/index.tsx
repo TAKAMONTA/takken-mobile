@@ -2,12 +2,13 @@ import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { useAuth } from '../../lib/AuthContext';
-import { getStudyStats, StudyStats } from '../../lib/firestore-service';
+import { getStudyStats, StudyStats, getUserProfile, UserProfile } from '../../lib/firestore-service';
 import { ZenColors, Spacing, FontSize, BorderRadius, Shadow } from '../../constants/Colors';
 
 export default function DashboardScreen() {
   const { user } = useAuth();
   const [stats, setStats] = useState<StudyStats | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,6 +24,9 @@ export default function DashboardScreen() {
     try {
       const userStats = await getStudyStats(user.uid);
       setStats(userStats);
+      
+      const userProfile = await getUserProfile(user.uid);
+      setProfile(userProfile);
     } catch (error) {
       console.error('Error loading stats:', error);
     } finally {
@@ -86,6 +90,37 @@ export default function DashboardScreen() {
             <Text style={styles.streakLabel}>連続学習日数</Text>
           </View>
         </View>
+
+        {/* プレミアム機能 */}
+        {profile?.isPremium && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>✨ プレミアム機能</Text>
+            <View style={styles.premiumGrid}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.premiumCard,
+                  pressed && styles.premiumCardPressed,
+                ]}
+                onPress={() => router.push('/ai-practice/takkengyouhou')}
+              >
+                <Text style={styles.premiumIcon}>🤖</Text>
+                <Text style={styles.premiumTitle}>AI問題生成</Text>
+                <Text style={styles.premiumDescription}>無制限でAIが問題を生成</Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.premiumCard,
+                  pressed && styles.premiumCardPressed,
+                ]}
+                onPress={() => router.push('/review')}
+              >
+                <Text style={styles.premiumIcon}>🔄</Text>
+                <Text style={styles.premiumTitle}>間隔反復学習</Text>
+                <Text style={styles.premiumDescription}>間違えた問題を復習</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
 
         {/* おすすめの学習 */}
         <View style={styles.section}>
@@ -228,5 +263,39 @@ const styles = StyleSheet.create({
   loadingContainer: {
     padding: Spacing.xl,
     alignItems: 'center',
+  },
+  premiumGrid: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  premiumCard: {
+    flex: 1,
+    backgroundColor: '#FFF9E6',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    alignItems: 'center',
+    ...Shadow.sm,
+  },
+  premiumCardPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
+  },
+  premiumIcon: {
+    fontSize: 32,
+    marginBottom: Spacing.xs,
+  },
+  premiumTitle: {
+    fontSize: FontSize.md,
+    fontWeight: '600',
+    color: ZenColors.text.primary,
+    marginBottom: Spacing.xs,
+    textAlign: 'center',
+  },
+  premiumDescription: {
+    fontSize: FontSize.sm,
+    color: ZenColors.text.secondary,
+    textAlign: 'center',
   },
 });

@@ -275,3 +275,49 @@ export async function getCategoryStats(
     correctAnswers: categoryStats.correct || 0,
   };
 }
+
+// 間違えた問題の取得（復習用）
+export async function getIncorrectQuestions(
+  uid: string,
+  limitCount: number = 20
+): Promise<StudySession[]> {
+  const sessionsRef = collection(db, 'studySessions');
+  const q = query(
+    sessionsRef,
+    where('uid', '==', uid),
+    where('isCorrect', '==', false),
+    orderBy('timestamp', 'desc'),
+    limit(limitCount)
+  );
+
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    timestamp: doc.data().timestamp?.toDate() || new Date(),
+  } as StudySession));
+}
+
+// カテゴリ別の間違えた問題の取得
+export async function getIncorrectQuestionsByCategory(
+  uid: string,
+  category: string,
+  limitCount: number = 20
+): Promise<StudySession[]> {
+  const sessionsRef = collection(db, 'studySessions');
+  const q = query(
+    sessionsRef,
+    where('uid', '==', uid),
+    where('category', '==', category),
+    where('isCorrect', '==', false),
+    orderBy('timestamp', 'desc'),
+    limit(limitCount)
+  );
+
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    timestamp: doc.data().timestamp?.toDate() || new Date(),
+  } as StudySession));
+}
