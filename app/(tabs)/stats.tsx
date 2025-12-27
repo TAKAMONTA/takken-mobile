@@ -1,7 +1,85 @@
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../../lib/AuthContext';
+import { getStudyStats, StudyStats, getCategoryStats } from '../../lib/firestore-service';
 import { ZenColors, Spacing, FontSize, BorderRadius, Shadow } from '../../constants/Colors';
 
 export default function StatsScreen() {
+  const { user } = useAuth();
+  const [stats, setStats] = useState<StudyStats | null>(null);
+  const [categoryStats, setCategoryStats] = useState<any>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadStats();
+  }, [user]);
+
+  const loadStats = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const userStats = await getStudyStats(user.uid);
+      setStats(userStats);
+      
+      // Load category stats
+      const categories = ['takkengyouhou', 'minpou', 'hourei', 'zei'];
+      const categoryData: any = {};
+      for (const category of categories) {
+        const catStats = await getCategoryStats(user.uid, category);
+        categoryData[category] = catStats;
+      }
+      setCategoryStats(categoryData);
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getAccuracyRate = (): number => {
+    if (!stats || stats.totalQuestions === 0) return 0;
+    return Math.round((stats.correctAnswers / stats.totalQuestions) * 100);
+  };
+
+  const getCategoryAccuracy = (category: string): number => {
+    const catStats = categoryStats[category];
+    if (!catStats || catStats.totalQuestions === 0) return 0;
+    return Math.round((catStats.correctAnswers / catStats.totalQuestions) * 100);
+  };
+
+  const formatTime = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) {
+      return `${hours}時間`;
+    }
+    if (minutes > 0) {
+      return `${minutes}分`;
+    }
+    return '0時間';
+  };
+
+  const getCategoryName = (category: string): string => {
+    const names: any = {
+      takkengyouhou: '宅建業法',
+      minpou: '民法等',
+      hourei: '法令上の制限',
+      zei: '税・その他',
+    };
+    return names[category] || category;
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={ZenColors.primary} />
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
@@ -10,21 +88,21 @@ export default function StatsScreen() {
           <Text style={styles.sectionTitle}>総合統計</Text>
           <View style={styles.statsGrid}>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statValue}>{stats?.totalQuestions || 0}</Text>
               <Text style={styles.statLabel}>総問題数</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>0%</Text>
+              <Text style={styles.statValue}>{getAccuracyRate()}%</Text>
               <Text style={styles.statLabel}>正答率</Text>
             </View>
           </View>
           <View style={styles.statsGrid}>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>0日</Text>
+              <Text style={styles.statValue}>{stats?.currentStreak || 0}日</Text>
               <Text style={styles.statLabel}>学習日数</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>0時間</Text>
+              <Text style={styles.statValue}>{formatTime(stats?.totalStudyTime || 0)}</Text>
               <Text style={styles.statLabel}>学習時間</Text>
             </View>
           </View>
@@ -34,34 +112,18 @@ export default function StatsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>分野別正答率</Text>
           <View style={styles.card}>
-            <View style={styles.categoryRow}>
-              <Text style={styles.categoryName}>宅建業法</Text>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: '0%' }]} />
-              </View>
-              <Text style={styles.percentage}>0%</Text>
-            </View>
-            <View style={styles.categoryRow}>
-              <Text style={styles.categoryName}>民法等</Text>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: '0%' }]} />
-              </View>
-              <Text style={styles.percentage}>0%</Text>
-            </View>
-            <View style={styles.categoryRow}>
-              <Text style={styles.categoryName}>法令上の制限</Text>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: '0%' }]} />
-              </View>
-              <Text style={styles.percentage}>0%</Text>
-            </View>
-            <View style={styles.categoryRow}>
-              <Text style={styles.categoryName}>税・その他</Text>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: '0%' }]} />
-              </View>
-              <Text style={styles.percentage}>0%</Text>
-            </View>
+            {['takkengyouhou', 'minpou', 'hourei', 'zei'].map((category) => {
+              const accuracy = getCategoryAccuracy(category);
+              return (
+                <View key={category} style={styles.categoryRow}>
+                  <Text style={styles.categoryName}>{getCategoryName(category)}</Text>
+                  <View style={styles.progressBar}>
+                    <View style={[styles.progressFill, { width: `${accuracy}%` }]} />
+                  </View>
+                  <Text style={styles.percentage}>{accuracy}%</Text>
+                </View>
+              );
+            })}
           </View>
         </View>
 
@@ -71,9 +133,9 @@ export default function StatsScreen() {
           <View style={styles.card}>
             <Text style={styles.progressTitle}>全体の進捗</Text>
             <View style={styles.largeProgressBar}>
-              <View style={[styles.largeProgressFill, { width: '0%' }]} />
+              <View style={[styles.largeProgressFill, { width: `${Math.min(100, ((stats?.totalQuestions || 0) / 500) * 100)}%` }]} />
             </View>
-            <Text style={styles.progressText}>0 / 900問</Text>
+            <Text style={styles.progressText}>{stats?.totalQuestions || 0} / 500問</Text>
           </View>
         </View>
 
@@ -81,7 +143,15 @@ export default function StatsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>最近の成績</Text>
           <View style={styles.card}>
-            <Text style={styles.emptyText}>まだデータがありません</Text>
+            {stats && stats.totalQuestions > 0 ? (
+              <View>
+                <Text style={styles.recentText}>正解: {stats.correctAnswers}問</Text>
+                <Text style={styles.recentText}>不正解: {stats.totalQuestions - stats.correctAnswers}問</Text>
+                <Text style={styles.recentText}>正答率: {getAccuracyRate()}%</Text>
+              </View>
+            ) : (
+              <Text style={styles.emptyText}>まだデータがありません</Text>
+            )}
           </View>
         </View>
 
@@ -89,9 +159,33 @@ export default function StatsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>弱点分野</Text>
           <View style={styles.card}>
-            <Text style={styles.emptyText}>
-              学習を進めると、弱点分野が表示されます
-            </Text>
+            {stats && stats.totalQuestions > 0 ? (
+              <View>
+                {['takkengyouhou', 'minpou', 'hourei', 'zei']
+                  .map((category) => ({
+                    category,
+                    accuracy: getCategoryAccuracy(category),
+                    name: getCategoryName(category),
+                  }))
+                  .filter((item) => item.accuracy < 70 && categoryStats[item.category]?.totalQuestions > 0)
+                  .sort((a, b) => a.accuracy - b.accuracy)
+                  .map((item) => (
+                    <View key={item.category} style={styles.weaknessRow}>
+                      <Text style={styles.weaknessName}>{item.name}</Text>
+                      <Text style={styles.weaknessAccuracy}>{item.accuracy}%</Text>
+                    </View>
+                  ))}
+                {['takkengyouhou', 'minpou', 'hourei', 'zei'].every(
+                  (cat) => getCategoryAccuracy(cat) >= 70 || categoryStats[cat]?.totalQuestions === 0
+                ) && (
+                  <Text style={styles.emptyText}>弱点分野はありません</Text>
+                )}
+              </View>
+            ) : (
+              <Text style={styles.emptyText}>
+                学習を進めると、弱点分野が表示されます
+              </Text>
+            )}
           </View>
         </View>
       </View>
@@ -106,6 +200,12 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: Spacing.lg,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: ZenColors.background,
   },
   section: {
     marginBottom: Spacing.xl,
@@ -200,5 +300,29 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     color: ZenColors.text.secondary,
     textAlign: 'center',
+  },
+  recentText: {
+    fontSize: FontSize.md,
+    color: ZenColors.text.primary,
+    marginBottom: Spacing.xs,
+  },
+  weaknessRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: ZenColors.border,
+  },
+  weaknessName: {
+    fontSize: FontSize.md,
+    fontWeight: '600',
+    color: ZenColors.text.primary,
+  },
+  weaknessAccuracy: {
+    fontSize: FontSize.md,
+    fontWeight: '600',
+    color: ZenColors.error,
   },
 });

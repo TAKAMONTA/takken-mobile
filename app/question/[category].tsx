@@ -126,7 +126,7 @@ export default function QuestionScreen() {
       <View style={styles.header}>
         <Pressable 
           onPress={() => router.back()}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
           style={styles.backButtonContainer}
         >
           <Text style={styles.backButton}>← 戻る</Text>
@@ -241,8 +241,10 @@ const styles = StyleSheet.create({
     borderBottomColor: ZenColors.border,
   },
   backButtonContainer: {
-    padding: Spacing.sm,
-    marginLeft: -Spacing.sm,
+    padding: Spacing.md,
+    minWidth: 80,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   backButton: {
     fontSize: FontSize.md,

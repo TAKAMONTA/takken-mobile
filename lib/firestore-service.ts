@@ -250,3 +250,28 @@ export async function updatePremiumStatus(uid: string, isPremium: boolean): Prom
     isPremium,
   });
 }
+
+// カテゴリ別統計の取得
+export async function getCategoryStats(
+  uid: string,
+  category: string
+): Promise<{ totalQuestions: number; correctAnswers: number } | null> {
+  const statsRef = doc(db, 'stats', uid);
+  const statsDoc = await getDoc(statsRef);
+
+  if (!statsDoc.exists()) {
+    return { totalQuestions: 0, correctAnswers: 0 };
+  }
+
+  const data = statsDoc.data();
+  const categoryStats = data.categoryStats?.[category];
+
+  if (!categoryStats) {
+    return { totalQuestions: 0, correctAnswers: 0 };
+  }
+
+  return {
+    totalQuestions: categoryStats.total || 0,
+    correctAnswers: categoryStats.correct || 0,
+  };
+}
