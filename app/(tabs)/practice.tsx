@@ -106,46 +106,7 @@ export default function PracticeScreen() {
           ))}
         </View>
 
-        {/* その他の学習モード */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>その他の学習モード</Text>
-          
-          <Pressable
-            style={({ pressed }) => [
-              styles.modeCard,
-              pressed && styles.modeCardPressed,
-            ]}
-          >
-            <Text style={styles.modeTitle}>○×問題</Text>
-            <Text style={styles.modeDescription}>
-              正誤問題で素早く知識を確認
-            </Text>
-          </Pressable>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.modeCard,
-              pressed && styles.modeCardPressed,
-            ]}
-          >
-            <Text style={styles.modeTitle}>模擬試験</Text>
-            <Text style={styles.modeDescription}>
-              本番形式で実力を試す
-            </Text>
-          </Pressable>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.modeCard,
-              pressed && styles.modeCardPressed,
-            ]}
-          >
-            <Text style={styles.modeTitle}>弱点克服</Text>
-            <Text style={styles.modeDescription}>
-              間違えた問題を重点的に学習
-            </Text>
-          </Pressable>
-        </View>
       </View>
     </ScrollView>
   );
