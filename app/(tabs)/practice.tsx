@@ -9,6 +9,7 @@ const categories = [
     description: '宅建業法に関する問題',
     questionCount: 250,
     color: ZenColors.primary,
+    icon: '📚',
   },
   {
     id: 'minpou',
@@ -16,6 +17,7 @@ const categories = [
     description: '民法・借地借家法に関する問題',
     questionCount: 300,
     color: '#7B9FAD',
+    icon: '⚖️',
   },
   {
     id: 'hourei',
@@ -23,6 +25,7 @@ const categories = [
     description: '都市計画法・建築基準法等',
     questionCount: 200,
     color: '#D4A574',
+    icon: '🏛️',
   },
   {
     id: 'zeihou',
@@ -30,6 +33,7 @@ const categories = [
     description: '税法・不動産鑑定評価等',
     questionCount: 150,
     color: '#6B8E6F',
+    icon: '💰',
   },
 ];
 
@@ -56,12 +60,7 @@ export default function PracticeScreen() {
               ]}
               onPress={() => router.push(`/question/${category.id}`)}
             >
-              <View
-                style={[
-                  styles.categoryIcon,
-                  { backgroundColor: category.color },
-                ]}
-              />
+              <Text style={styles.categoryIcon}>{category.icon}</Text>
               <View style={styles.categoryContent}>
                 <Text style={styles.categoryName}>{category.name}</Text>
                 <Text style={styles.categoryDescription}>
@@ -162,9 +161,11 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   categoryIcon: {
+    fontSize: 40,
     width: 48,
     height: 48,
-    borderRadius: BorderRadius.md,
+    textAlign: 'center',
+    lineHeight: 48,
   },
   categoryContent: {
     flex: 1,
