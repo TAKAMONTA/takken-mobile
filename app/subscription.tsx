@@ -2,13 +2,21 @@ import { View, Text, StyleSheet, ScrollView, Pressable, Alert, ActivityIndicator
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { useAuth } from '../lib/AuthContext';
-import { 
-  initializeIAP, 
-  cleanupIAP, 
-  getSubscriptionProducts, 
-  purchaseSubscription,
-  SubscriptionProduct,
-} from '../lib/iap-service';
+// IAP is not supported in Expo Go
+let initializeIAP: any = () => Promise.resolve();
+let cleanupIAP: any = () => {};
+let getSubscriptionProducts: any = () => Promise.resolve([]);
+let purchaseSubscription: any = () => Promise.resolve(null);
+type SubscriptionProduct = any;
+
+// Only import IAP in production builds
+if (process.env.NODE_ENV === 'production') {
+  const iapService = require('../lib/iap-service');
+  initializeIAP = iapService.initializeIAP;
+  cleanupIAP = iapService.cleanupIAP;
+  getSubscriptionProducts = iapService.getSubscriptionProducts;
+  purchaseSubscription = iapService.purchaseSubscription;
+}
 import { ZenColors, Spacing, FontSize, BorderRadius, Shadow } from '../constants/Colors';
 
 const features = [
