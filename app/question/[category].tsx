@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from 'react-nati
 import { useState, useEffect } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useAuth } from '../../lib/AuthContext';
-import { getQuestionsByCategory, categoryInfo } from '../../lib/data/sample-questions';
+import { getQuestionsByCategory, categoryInfo } from '../../lib/question-service';
 import { Question } from '../../lib/types';
 import { saveStudySession } from '../../lib/firestore-service';
 import { ZenColors, Spacing, FontSize, BorderRadius, Shadow } from '../../constants/Colors';
@@ -19,10 +19,19 @@ export default function QuestionScreen() {
 
   useEffect(() => {
     if (category) {
-      const categoryQuestions = getQuestionsByCategory(category);
-      setQuestions(categoryQuestions);
+      loadQuestions();
     }
   }, [category]);
+
+  const loadQuestions = async () => {
+    try {
+      const categoryQuestions = await getQuestionsByCategory(category as string);
+      setQuestions(categoryQuestions);
+    } catch (error) {
+      console.error('問題の読み込みに失敗しました:', error);
+      Alert.alert('エラー', '問題の読み込みに失敗しました');
+    }
+  };
 
   if (questions.length === 0) {
     return (
