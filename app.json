@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "takken-mobile",
+    "name": "宅建合格ロード",
     "slug": "takken-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,21 +10,33 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#F4F3EF"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.takamonta.takken",
+      "buildNumber": "1.0.0"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#F4F3EF"
       },
+      "package": "com.takamonta.takken",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "react-native-iap"
+    ],
+    "scheme": "takken",
+    "experiments": {
+      "typedRoutes": true
     }
   }
 }
