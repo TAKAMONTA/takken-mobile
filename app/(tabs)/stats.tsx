@@ -1,7 +1,10 @@
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Pressable, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
+import { router } from 'expo-router';
 import { useAuth } from '../../lib/AuthContext';
-import { getStudyStats, StudyStats, getCategoryStats } from '../../lib/firestore-service';
+import { getStudyStats, StudyStats, getCategoryStats, getIncorrectQuestions, getUserProfile } from '../../lib/firestore-service';
+import { analyzeWeaknesses } from '../../lib/ai-service';
+import { getQuestionById } from '../../lib/question-service';
 import { ZenColors, Spacing, FontSize, BorderRadius, Shadow } from '../../constants/Colors';
 
 export default function StatsScreen() {
@@ -9,6 +12,9 @@ export default function StatsScreen() {
   const [stats, setStats] = useState<StudyStats | null>(null);
   const [categoryStats, setCategoryStats] = useState<any>({});
   const [loading, setLoading] = useState(true);
+  const [isPremium, setIsPremium] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
 
   useEffect(() => {
     loadStats();
@@ -24,6 +30,9 @@ export default function StatsScreen() {
       const userStats = await getStudyStats(user.uid);
       setStats(userStats);
       
+      const profile = await getUserProfile(user.uid);
+      setIsPremium(profile?.isPremium || false);
+      
       // Load category stats
       const categories = ['takkengyouhou', 'minpou', 'hourei', 'zei'];
       const categoryData: any = {};
@@ -36,6 +45,49 @@ export default function StatsScreen() {
       console.error('Error loading stats:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGetAIAnalysis = async () => {
+    if (!isPremium) {
+      Alert.alert('プレミアム機能', 'AI弱点分析はプレミアムプラン限定です', [
+        { text: 'キャンセル' },
+        { text: 'プレミアムプランを見る', onPress: () => router.push('/subscription') },
+      ]);
+      return;
+    }
+
+    if (!user) return;
+
+    setLoadingAnalysis(true);
+    try {
+      const incorrectSessions = await getIncorrectQuestions(user.uid, 20);
+      
+      if (incorrectSessions.length === 0) {
+        Alert.alert('データ不足', '間違えた問題がまだありません。問題を解いてから分析を実行してください。');
+        setLoadingAnalysis(false);
+        return;
+      }
+
+      const questionsData = [];
+      for (const session of incorrectSessions) {
+        const question = await getQuestionById(session.questionId);
+        if (question) {
+          questionsData.push({
+            question: question.question,
+            category: session.category,
+            userAnswer: session.userAnswer,
+            correctAnswer: session.correctAnswer,
+          });
+        }
+      }
+
+      const analysis = await analyzeWeaknesses(questionsData);
+      setAiAnalysis(analysis);
+    } catch (error) {
+      Alert.alert('エラー', 'AI分析の生成に失敗しました');
+    } finally {
+      setLoadingAnalysis(false);
     }
   };
 
@@ -126,6 +178,45 @@ export default function StatsScreen() {
             })}
           </View>
         </View>
+
+        {/* AI弱点分析 */}
+        {isPremium && stats && stats.totalQuestions > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🤖 AI弱点分析</Text>
+            <View style={styles.card}>
+              {!aiAnalysis ? (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.analysisButton,
+                    pressed && styles.buttonPressed,
+                    loadingAnalysis && styles.buttonDisabled,
+                  ]}
+                  onPress={handleGetAIAnalysis}
+                  disabled={loadingAnalysis}
+                >
+                  {loadingAnalysis ? (
+                    <ActivityIndicator size="small" color={ZenColors.text.inverse} />
+                  ) : (
+                    <Text style={styles.analysisButtonText}>弱点を分析する</Text>
+                  )}
+                </Pressable>
+              ) : (
+                <View>
+                  <Text style={styles.aiAnalysisText}>{aiAnalysis}</Text>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.refreshButton,
+                      pressed && styles.buttonPressed,
+                    ]}
+                    onPress={handleGetAIAnalysis}
+                  >
+                    <Text style={styles.refreshButtonText}>🔄 再分析</Text>
+                  </Pressable>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
 
         {/* 学習の進捗 */}
         <View style={styles.section}>
@@ -324,5 +415,42 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     fontWeight: '600',
     color: ZenColors.error,
+  },
+  analysisButton: {
+    backgroundColor: ZenColors.primary,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
+    ...Shadow.md,
+  },
+  buttonPressed: {
+    opacity: 0.8,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  analysisButtonText: {
+    color: ZenColors.text.inverse,
+    fontSize: FontSize.md,
+    fontWeight: '600',
+  },
+  aiAnalysisText: {
+    fontSize: FontSize.md,
+    color: ZenColors.text.primary,
+    lineHeight: FontSize.md * 1.7,
+    marginBottom: Spacing.md,
+  },
+  refreshButton: {
+    backgroundColor: ZenColors.gray[200],
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignSelf: 'flex-start',
+  },
+  refreshButtonText: {
+    color: ZenColors.text.secondary,
+    fontSize: FontSize.sm,
+    fontWeight: '600',
   },
 });

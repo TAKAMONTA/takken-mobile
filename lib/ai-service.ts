@@ -309,3 +309,207 @@ export async function generateAIQuestion(category: string): Promise<Question> {
     throw new Error('AI問題の生成に失敗しました');
   }
 }
+
+
+// AI解説生成
+export async function generateAIExplanation(
+  question: string,
+  choices: string[],
+  correctAnswer: number,
+  originalExplanation: string
+): Promise<string> {
+  try {
+    const prompt = `以下の宅建試験問題について、初心者にもわかりやすく詳しく解説してください。
+
+【問題】
+${question}
+
+【選択肢】
+${choices.map((choice, index) => `${index + 1}. ${choice}`).join('\n')}
+
+【正解】
+${correctAnswer + 1}. ${choices[correctAnswer]}
+
+【基本解説】
+${originalExplanation}
+
+【AI解説の要件】
+1. なぜこの選択肢が正解なのか、法律の根拠を含めて説明
+2. 他の選択肢がなぜ間違っているのか、それぞれ説明
+3. 関連する法律や条文を具体的に示す
+4. 実務での適用例や覚え方のコツを提示
+5. 初心者にもわかりやすい言葉で説明
+
+400文字以内で簡潔に説明してください。`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4.1-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'あなたは宅建試験の専門講師です。受験生が理解しやすいように、わかりやすく丁寧に解説してください。',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 1000,
+    });
+
+    return response.choices[0]?.message?.content || '解説の生成に失敗しました。';
+  } catch (error) {
+    console.error('Error generating AI explanation:', error);
+    throw new Error('AI解説の生成に失敗しました');
+  }
+}
+
+// AI学習アドバイス生成
+export async function generateStudyAdvice(stats: {
+  totalQuestions: number;
+  correctRate: number;
+  studyDays: number;
+  categoryStats: Array<{ category: string; correctRate: number; count: number }>;
+}): Promise<string> {
+  try {
+    const prompt = `以下の学習データを分析して、次に何を勉強すべきか具体的なアドバイスをしてください。
+
+【学習データ】
+- 総問題数: ${stats.totalQuestions}問
+- 正答率: ${stats.correctRate}%
+- 学習日数: ${stats.studyDays}日
+
+【カテゴリ別成績】
+${stats.categoryStats.map(cat => `- ${cat.category}: ${cat.count}問、正答率${cat.correctRate}%`).join('\n')}
+
+【アドバイスの要件】
+1. 現在の学習状況の評価
+2. 優先的に学習すべき分野
+3. 具体的な学習方法の提案
+4. 目標設定のアドバイス
+
+200文字以内で簡潔にアドバイスしてください。`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4.1-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'あなたは宅建試験の学習アドバイザーです。受験生の学習状況を分析し、効果的な学習方法を提案してください。',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 500,
+    });
+
+    return response.choices[0]?.message?.content || 'アドバイスの生成に失敗しました。';
+  } catch (error) {
+    console.error('Error generating study advice:', error);
+    throw new Error('学習アドバイスの生成に失敗しました');
+  }
+}
+
+// AI弱点分析
+export async function analyzeWeaknesses(incorrectQuestions: Array<{
+  question: string;
+  category: string;
+  userAnswer: number;
+  correctAnswer: number;
+}>): Promise<string> {
+  try {
+    const prompt = `以下の間違えた問題を分析して、学習者の弱点パターンを特定してください。
+
+【間違えた問題】
+${incorrectQuestions.slice(0, 10).map((q, i) => `
+${i + 1}. カテゴリ: ${q.category}
+問題: ${q.question.substring(0, 100)}...
+選んだ答え: ${q.userAnswer + 1}
+正解: ${q.correctAnswer + 1}
+`).join('\n')}
+
+【分析の要件】
+1. 共通する間違いのパターン
+2. 理解が不足している分野
+3. 改善のための具体的な学習方法
+4. 注意すべきポイント
+
+300文字以内で分析結果を提示してください。`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4.1-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'あなたは宅建試験の分析専門家です。受験生の間違いパターンを分析し、効果的な改善方法を提案してください。',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 800,
+    });
+
+    return response.choices[0]?.message?.content || '分析に失敗しました。';
+  } catch (error) {
+    console.error('Error analyzing weaknesses:', error);
+    throw new Error('弱点分析に失敗しました');
+  }
+}
+
+// AI質問応答
+export async function askAIQuestion(
+  question: string,
+  choices: string[],
+  correctAnswer: number,
+  explanation: string,
+  userQuestion: string
+): Promise<string> {
+  try {
+    const prompt = `以下の宅建試験問題について、受験生からの質問に答えてください。
+
+【問題】
+${question}
+
+【選択肢】
+${choices.map((choice, index) => `${index + 1}. ${choice}`).join('\n')}
+
+【正解】
+${correctAnswer + 1}. ${choices[correctAnswer]}
+
+【解説】
+${explanation}
+
+【受験生からの質問】
+${userQuestion}
+
+わかりやすく丁寧に回答してください（200文字以内）。`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4.1-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'あなたは宅建試験の専門講師です。受験生の質問に対して、わかりやすく丁寧に回答してください。',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 500,
+    });
+
+    return response.choices[0]?.message?.content || '回答の生成に失敗しました。';
+  } catch (error) {
+    console.error('Error asking AI question:', error);
+    throw new Error('AI質問の回答に失敗しました');
+  }
+}

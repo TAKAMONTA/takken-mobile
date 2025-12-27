@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { useAuth } from '../../lib/AuthContext';
-import { getStudyStats, StudyStats, getUserProfile, UserProfile } from '../../lib/firestore-service';
+import { getStudyStats, StudyStats, getUserProfile, UserProfile, getCategoryStats } from '../../lib/firestore-service';
+import { generateStudyAdvice } from '../../lib/ai-service';
 import { ZenColors, Spacing, FontSize, BorderRadius, Shadow } from '../../constants/Colors';
 
 export default function DashboardScreen() {
@@ -10,6 +11,8 @@ export default function DashboardScreen() {
   const [stats, setStats] = useState<StudyStats | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [aiAdvice, setAiAdvice] = useState<string | null>(null);
+  const [loadingAdvice, setLoadingAdvice] = useState(false);
 
   useEffect(() => {
     loadStats();
@@ -46,6 +49,38 @@ export default function DashboardScreen() {
   const getAccuracyRate = (): number => {
     if (!stats || stats.totalQuestions === 0) return 0;
     return Math.round((stats.correctAnswers / stats.totalQuestions) * 100);
+  };
+
+  const handleGetAIAdvice = async () => {
+    if (!profile?.isPremium) {
+      Alert.alert('プレミアム機能', 'AI学習アドバイザーはプレミアムプラン限定です', [
+        { text: 'キャンセル' },
+        { text: 'プレミアムプランを見る', onPress: () => router.push('/subscription') },
+      ]);
+      return;
+    }
+
+    if (!user || !stats) return;
+
+    setLoadingAdvice(true);
+    try {
+      const categoryStats = await getCategoryStats(user.uid);
+      const advice = await generateStudyAdvice({
+        totalQuestions: stats.totalQuestions,
+        correctRate: getAccuracyRate(),
+        studyDays: stats.studyDays,
+        categoryStats: categoryStats.map(cat => ({
+          category: cat.category,
+          correctRate: cat.correctRate,
+          count: cat.totalQuestions,
+        })),
+      });
+      setAiAdvice(advice);
+    } catch (error) {
+      Alert.alert('エラー', 'AIアドバイスの生成に失敗しました');
+    } finally {
+      setLoadingAdvice(false);
+    }
   };
 
   return (
@@ -118,6 +153,45 @@ export default function DashboardScreen() {
                 <Text style={styles.premiumTitle}>間隔反復学習</Text>
                 <Text style={styles.premiumDescription}>間違えた問題を復習</Text>
               </Pressable>
+            </View>
+          </View>
+        )}
+
+        {/* AI学習アドバイザー */}
+        {profile?.isPremium && stats && stats.totalQuestions > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🧠 AI学習アドバイザー</Text>
+            <View style={styles.card}>
+              {!aiAdvice ? (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.button,
+                    pressed && styles.buttonPressed,
+                    loadingAdvice && styles.buttonDisabled,
+                  ]}
+                  onPress={handleGetAIAdvice}
+                  disabled={loadingAdvice}
+                >
+                  {loadingAdvice ? (
+                    <ActivityIndicator size="small" color={ZenColors.text.inverse} />
+                  ) : (
+                    <Text style={styles.buttonText}>AIアドバイスを取得</Text>
+                  )}
+                </Pressable>
+              ) : (
+                <View>
+                  <Text style={styles.aiAdviceText}>{aiAdvice}</Text>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.refreshButton,
+                      pressed && styles.buttonPressed,
+                    ]}
+                    onPress={handleGetAIAdvice}
+                  >
+                    <Text style={styles.refreshButtonText}>🔄 更新</Text>
+                  </Pressable>
+                </View>
+              )}
             </View>
           </View>
         )}
@@ -297,5 +371,26 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     color: ZenColors.text.secondary,
     textAlign: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  aiAdviceText: {
+    fontSize: FontSize.md,
+    color: ZenColors.text.primary,
+    lineHeight: FontSize.md * 1.7,
+    marginBottom: Spacing.md,
+  },
+  refreshButton: {
+    backgroundColor: ZenColors.gray[200],
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignSelf: 'flex-start',
+  },
+  refreshButtonText: {
+    color: ZenColors.text.secondary,
+    fontSize: FontSize.sm,
+    fontWeight: '600',
   },
 });

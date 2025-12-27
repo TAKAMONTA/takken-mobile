@@ -1,10 +1,11 @@
-import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Alert, ActivityIndicator, TextInput, Modal } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useAuth } from '../../lib/AuthContext';
 import { getQuestionsByCategory, categoryInfo } from '../../lib/question-service';
 import { Question } from '../../lib/types';
-import { saveStudySession } from '../../lib/firestore-service';
+import { saveStudySession, getUserProfile } from '../../lib/firestore-service';
+import { generateAIExplanation, askAIQuestion } from '../../lib/ai-service';
 import { ZenColors, Spacing, FontSize, BorderRadius, Shadow } from '../../constants/Colors';
 
 export default function QuestionScreen() {
@@ -16,12 +17,30 @@ export default function QuestionScreen() {
   const [showExplanation, setShowExplanation] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [startTime, setStartTime] = useState<Date>(new Date());
+  const [isPremium, setIsPremium] = useState(false);
+  const [aiExplanation, setAiExplanation] = useState<string | null>(null);
+  const [loadingAiExplanation, setLoadingAiExplanation] = useState(false);
+  const [showAiChat, setShowAiChat] = useState(false);
+  const [userQuestion, setUserQuestion] = useState('');
+  const [aiAnswer, setAiAnswer] = useState<string | null>(null);
+  const [loadingAiAnswer, setLoadingAiAnswer] = useState(false);
 
   useEffect(() => {
     if (category) {
       loadQuestions();
     }
+    checkPremium();
   }, [category]);
+
+  const checkPremium = async () => {
+    if (!user) return;
+    try {
+      const profile = await getUserProfile(user.uid);
+      setIsPremium(profile?.isPremium || false);
+    } catch (error) {
+      console.error('Error checking premium status:', error);
+    }
+  };
 
   const loadQuestions = async () => {
     try {
@@ -30,6 +49,65 @@ export default function QuestionScreen() {
     } catch (error) {
       console.error('問題の読み込みに失敗しました:', error);
       Alert.alert('エラー', '問題の読み込みに失敗しました');
+    }
+  };
+
+  const handleGetAIExplanation = async () => {
+    if (!isPremium) {
+      Alert.alert('プレミアム機能', 'AI解説はプレミアムプラン限定です', [
+        { text: 'キャンセル' },
+        { text: 'プレミアムプランを見る', onPress: () => router.push('/subscription') },
+      ]);
+      return;
+    }
+
+    setLoadingAiExplanation(true);
+    try {
+      const explanation = await generateAIExplanation(
+        currentQuestion.question,
+        currentQuestion.choices,
+        currentQuestion.correctAnswer,
+        currentQuestion.explanation
+      );
+      setAiExplanation(explanation);
+    } catch (error) {
+      Alert.alert('エラー', 'AI解説の生成に失敗しました');
+    } finally {
+      setLoadingAiExplanation(false);
+    }
+  };
+
+  const handleAskAI = async () => {
+    if (!isPremium) {
+      Alert.alert('プレミアム機能', 'AI質問機能はプレミアムプラン限定です', [
+        { text: 'キャンセル' },
+        { text: 'プレミアムプランを見る', onPress: () => router.push('/subscription') },
+      ]);
+      return;
+    }
+    setShowAiChat(true);
+  };
+
+  const handleSubmitQuestion = async () => {
+    if (!userQuestion.trim()) {
+      Alert.alert('質問を入力してください');
+      return;
+    }
+
+    setLoadingAiAnswer(true);
+    try {
+      const answer = await askAIQuestion(
+        currentQuestion.question,
+        currentQuestion.choices,
+        currentQuestion.correctAnswer,
+        currentQuestion.explanation,
+        userQuestion
+      );
+      setAiAnswer(answer);
+    } catch (error) {
+      Alert.alert('エラー', 'AIの回答生成に失敗しました');
+    } finally {
+      setLoadingAiAnswer(false);
     }
   };
 
@@ -184,14 +262,56 @@ export default function QuestionScreen() {
 
           {/* 解説 */}
           {showExplanation && (
-            <View style={styles.explanation}>
-              <Text style={styles.explanationTitle}>
-                {selectedAnswer === currentQuestion.correctAnswer ? '✓ 正解' : '✗ 不正解'}
-              </Text>
-              <Text style={styles.explanationText}>
-                {currentQuestion.explanation}
-              </Text>
-            </View>
+            <>
+              <View style={styles.explanation}>
+                <Text style={styles.explanationTitle}>
+                  {selectedAnswer === currentQuestion.correctAnswer ? '✓ 正解' : '✗ 不正解'}
+                </Text>
+                <Text style={styles.explanationText}>
+                  {currentQuestion.explanation}
+                </Text>
+              </View>
+
+              {/* AI解説ボタン */}
+              {isPremium && (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.aiButton,
+                    pressed && styles.buttonPressed,
+                    loadingAiExplanation && styles.buttonDisabled,
+                  ]}
+                  onPress={handleGetAIExplanation}
+                  disabled={loadingAiExplanation}
+                >
+                  {loadingAiExplanation ? (
+                    <ActivityIndicator size="small" color={ZenColors.text.inverse} />
+                  ) : (
+                    <Text style={styles.aiButtonText}>🤖 AI解説を見る</Text>
+                  )}
+                </Pressable>
+              )}
+
+              {/* AI解説表示 */}
+              {aiExplanation && (
+                <View style={styles.aiExplanation}>
+                  <Text style={styles.aiExplanationTitle}>🤖 AI解説</Text>
+                  <Text style={styles.aiExplanationText}>{aiExplanation}</Text>
+                </View>
+              )}
+
+              {/* AI質問ボタン */}
+              {isPremium && (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.aiQuestionButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                  onPress={handleAskAI}
+                >
+                  <Text style={styles.aiQuestionButtonText}>💬 AIに質問する</Text>
+                </Pressable>
+              )}
+            </>
           )}
 
           {/* ボタン */}
@@ -222,6 +342,67 @@ export default function QuestionScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* AI質問モーダル */}
+      <Modal
+        visible={showAiChat}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowAiChat(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>🤖 AIに質問</Text>
+              <Pressable
+                onPress={() => {
+                  setShowAiChat(false);
+                  setUserQuestion('');
+                  setAiAnswer(null);
+                }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Text style={styles.modalClose}>×</Text>
+              </Pressable>
+            </View>
+
+            <ScrollView style={styles.modalScroll}>
+              <Text style={styles.modalLabel}>この問題について質問してください</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={userQuestion}
+                onChangeText={setUserQuestion}
+                placeholder="例: なぜ選択肢1が間違いなのですか？"
+                multiline
+                numberOfLines={4}
+              />
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.modalSubmitButton,
+                  pressed && styles.buttonPressed,
+                  loadingAiAnswer && styles.buttonDisabled,
+                ]}
+                onPress={handleSubmitQuestion}
+                disabled={loadingAiAnswer}
+              >
+                {loadingAiAnswer ? (
+                  <ActivityIndicator size="small" color={ZenColors.text.inverse} />
+                ) : (
+                  <Text style={styles.modalSubmitButtonText}>質問する</Text>
+                )}
+              </Pressable>
+
+              {aiAnswer && (
+                <View style={styles.aiAnswerContainer}>
+                  <Text style={styles.aiAnswerTitle}>🤖 AIの回答</Text>
+                  <Text style={styles.aiAnswerText}>{aiAnswer}</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -418,5 +599,137 @@ const styles = StyleSheet.create({
     color: ZenColors.text.inverse,
     fontSize: FontSize.md,
     fontWeight: '600',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  aiButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
+    marginTop: Spacing.md,
+    ...Shadow.sm,
+  },
+  aiButtonText: {
+    color: ZenColors.text.inverse,
+    fontSize: FontSize.md,
+    fontWeight: '600',
+  },
+  aiExplanation: {
+    backgroundColor: '#E8F5E9',
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+    marginTop: Spacing.md,
+  },
+  aiExplanationTitle: {
+    fontSize: FontSize.lg,
+    fontWeight: '700',
+    color: '#2E7D32',
+    marginBottom: Spacing.sm,
+  },
+  aiExplanationText: {
+    fontSize: FontSize.md,
+    color: '#1B5E20',
+    lineHeight: FontSize.md * 1.7,
+  },
+  aiQuestionButton: {
+    backgroundColor: '#2196F3',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
+    marginTop: Spacing.md,
+    ...Shadow.sm,
+  },
+  aiQuestionButtonText: {
+    color: ZenColors.text.inverse,
+    fontSize: FontSize.md,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: ZenColors.surface,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    maxHeight: '80%',
+    ...Shadow.lg,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: ZenColors.border,
+  },
+  modalTitle: {
+    fontSize: FontSize.xl,
+    fontWeight: '700',
+    color: ZenColors.text.primary,
+  },
+  modalClose: {
+    fontSize: 32,
+    color: ZenColors.text.secondary,
+    fontWeight: '300',
+  },
+  modalScroll: {
+    padding: Spacing.lg,
+  },
+  modalLabel: {
+    fontSize: FontSize.md,
+    color: ZenColors.text.secondary,
+    marginBottom: Spacing.sm,
+  },
+  modalInput: {
+    backgroundColor: ZenColors.background,
+    borderWidth: 1,
+    borderColor: ZenColors.border,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    fontSize: FontSize.md,
+    color: ZenColors.text.primary,
+    minHeight: 100,
+    textAlignVertical: 'top',
+    marginBottom: Spacing.md,
+  },
+  modalSubmitButton: {
+    backgroundColor: ZenColors.primary,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
+    ...Shadow.md,
+  },
+  modalSubmitButtonText: {
+    color: ZenColors.text.inverse,
+    fontSize: FontSize.md,
+    fontWeight: '600',
+  },
+  aiAnswerContainer: {
+    backgroundColor: '#E3F2FD',
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: '#2196F3',
+    marginTop: Spacing.lg,
+  },
+  aiAnswerTitle: {
+    fontSize: FontSize.lg,
+    fontWeight: '700',
+    color: '#1565C0',
+    marginBottom: Spacing.sm,
+  },
+  aiAnswerText: {
+    fontSize: FontSize.md,
+    color: '#0D47A1',
+    lineHeight: FontSize.md * 1.7,
   },
 });
