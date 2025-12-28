@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: ZenColors.background,
-    padding: Spacing.xl,
+    padding: Spacing.md,
   },
   loadingText: {
     fontSize: FontSize.md,
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
   },
   header: {
-    padding: Spacing.lg,
+    padding: Spacing.md,
     backgroundColor: ZenColors.surface,
     borderBottomWidth: 1,
     borderBottomColor: ZenColors.border,
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   titleSection: {
-    padding: Spacing.xl,
+    padding: Spacing.md,
     alignItems: 'center',
   },
   title: {

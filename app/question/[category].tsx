@@ -441,7 +441,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: Spacing.lg,
+    padding: Spacing.md,
   },
   categoryBadge: {
     backgroundColor: ZenColors.primary,
@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.full,
     alignSelf: 'flex-start',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   categoryText: {
     color: ZenColors.text.inverse,
@@ -457,20 +457,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   question: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.md,
     fontWeight: '600',
     color: ZenColors.text.primary,
-    lineHeight: FontSize.lg * 1.7,
-    marginBottom: Spacing.xl,
+    lineHeight: FontSize.md * 1.7,
+    marginBottom: Spacing.md,
   },
   choices: {
-    gap: Spacing.md,
-    marginBottom: Spacing.xl,
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   choice: {
     backgroundColor: ZenColors.surface,
     padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.md,
     borderWidth: 2,
     borderColor: ZenColors.border,
     flexDirection: 'row',

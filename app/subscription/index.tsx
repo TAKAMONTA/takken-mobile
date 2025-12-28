@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    padding: Spacing.lg,
+    padding: Spacing.md,
     backgroundColor: ZenColors.surface,
     borderBottomWidth: 1,
     borderBottomColor: ZenColors.border,
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   titleSection: {
-    padding: Spacing.xl,
+    padding: Spacing.md,
     alignItems: 'center',
   },
   title: {
@@ -172,19 +172,19 @@ const styles = StyleSheet.create({
     lineHeight: FontSize.md * 1.7,
   },
   section: {
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.xl,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
   },
   sectionTitle: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.md,
     fontWeight: '600',
     color: ZenColors.text.primary,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   featuresCard: {
     backgroundColor: ZenColors.surface,
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: ZenColors.border,
     ...Shadow.sm,
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   featureIcon: {
     fontSize: FontSize.xl,
@@ -205,8 +205,8 @@ const styles = StyleSheet.create({
   },
   planCard: {
     backgroundColor: ZenColors.surface,
-    padding: Spacing.xl,
-    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
     borderWidth: 2,
     borderColor: ZenColors.primary,
     ...Shadow.md,

@@ -187,21 +187,21 @@ const styles = StyleSheet.create({
     backgroundColor: ZenColors.background,
   },
   content: {
-    padding: Spacing.lg,
+    padding: Spacing.md,
   },
   section: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
   },
   sectionTitle: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.md,
     fontWeight: '600',
     color: ZenColors.text.primary,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   card: {
     backgroundColor: ZenColors.surface,
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: ZenColors.border,
     alignItems: 'center',

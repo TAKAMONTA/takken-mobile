@@ -122,10 +122,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   content: {
-    padding: Spacing.lg,
+    padding: Spacing.md,
   },
   header: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
   },
   title: {
     fontSize: FontSize.xxl,
@@ -139,18 +139,18 @@ const styles = StyleSheet.create({
     lineHeight: FontSize.md * 1.7,
   },
   categories: {
-    gap: Spacing.md,
-    marginBottom: Spacing.xl,
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   categoryCard: {
     backgroundColor: ZenColors.surface,
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: ZenColors.border,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: Spacing.sm,
     ...Shadow.sm,
   },
   categoryCardPressed: {
