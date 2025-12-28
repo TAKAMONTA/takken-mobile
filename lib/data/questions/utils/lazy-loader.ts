@@ -6,7 +6,6 @@
  */
 
 import { Question } from '@/lib/types/quiz';
-import { logger } from '@/lib/logger';
 
 type QuestionLoader = () => Promise<Question[]>;
 type QuestionArrayGetter = () => Question[];
@@ -52,7 +51,7 @@ export async function getQuestionsByCategoryLazy(
   // ローダーが見つからない場合は空配列を返す
   const loader = questionLoaders[category];
   if (!loader) {
-    logger.warn(`No loader found for category: ${category}`);
+    console.warn(`No loader found for category: ${category}`);
     return [];
   }
 
@@ -66,7 +65,7 @@ export async function getQuestionsByCategoryLazy(
     return questions;
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
-    logger.error(`Error loading questions for category ${category}`, err);
+    console.error(`Error loading questions for category ${category}`, err);
     return [];
   }
 }

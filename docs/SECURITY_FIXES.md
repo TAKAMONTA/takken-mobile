@@ -112,22 +112,29 @@ firebase deploy --only functions
 
 ---
 
-### 4. 【中優先度】未使用ファイルの削除
+### 4. 【中優先度】未使用ファイルの削除とlogger依存の修正
 
 **問題点**:
+- `lib/logger.ts`が存在しないにもかかわらず、複数のファイルからインポートされており、ビルドエラーの原因となる可能性
 - `lib/crypto-utils.ts`はNext.js用の環境変数を参照しており、Expo環境では動作しない
-- `lib/logger.ts`は使用されていない
 - Firebase Authenticationを使用しているため、クライアントサイドでのパスワード暗号化は不要
+- `crypto-utils.ts`は使用されておらず、削除可能
 
 **修正内容**:
 - `lib/crypto-utils.ts`を削除
-- `lib/logger.ts`を削除
-- `lib/data/questions/index.ts`から未使用のloggerインポートを削除
+- `lib/data/questions/index.ts`からloggerのインポートを削除（使用されていないため）
+- `lib/data/questions/utils/lazy-loader.ts`からloggerのインポートを削除し、`console.warn`/`console.error`に置き換え
+- `lib/data/questions/utils/index-builder.ts`からloggerのインポートを削除し、`console.error`に置き換え
+- `lib/study-utils.ts`からloggerのインポートを削除し、`console.error`に置き換え
 
 **ファイル変更**:
 - ✅ `lib/crypto-utils.ts` - 削除
-- ✅ `lib/logger.ts` - 削除
 - ✅ `lib/data/questions/index.ts` - loggerインポートを削除
+- ✅ `lib/data/questions/utils/lazy-loader.ts` - loggerをconsoleに置き換え
+- ✅ `lib/data/questions/utils/index-builder.ts` - loggerをconsoleに置き換え
+- ✅ `lib/study-utils.ts` - loggerをconsoleに置き換え
+
+**注意**: `lib/logger.ts`は存在しないため、削除の必要はありません。
 
 ---
 

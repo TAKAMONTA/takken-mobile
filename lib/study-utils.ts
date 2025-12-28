@@ -5,7 +5,6 @@ import {
   UserProfile,
 } from "./types";
 import { Question } from "./types/quiz";
-import { logger } from "./logger";
 import {
   FrequencyDataset,
   getFrequencyCount,
@@ -171,7 +170,7 @@ export async function saveStudyData(
     localStorage.setItem("takken_user", JSON.stringify(updatedUserData));
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-      logger.error("学習データの保存に失敗しました", err);
+      console.error("学習データの保存に失敗しました", err);
     }
 }
 

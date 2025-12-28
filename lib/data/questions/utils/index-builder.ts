@@ -8,7 +8,6 @@
 import { Question } from '@/lib/types/quiz';
 import * as fs from 'fs';
 import * as path from 'path';
-import { logger } from '@/lib/logger';
 
 /**
  * 問題ファイルのメタデータ
@@ -72,7 +71,7 @@ function extractExportName(filePath: string): string {
     }
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
-    logger.error(`Error extracting export name from ${filePath}`, err);
+    console.error(`Error extracting export name from ${filePath}`, err);
   }
   return '';
 }
