@@ -195,6 +195,7 @@ export default function NotificationSettingsScreen() {
         options={{
           title: '通知設定',
           headerShown: true,
+          headerBackTitle: 'プロフィール',
         }}
       />
       <ScrollView style={styles.container}>
