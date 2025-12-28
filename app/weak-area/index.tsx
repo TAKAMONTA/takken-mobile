@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Alert
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { useAuth } from '../../lib/AuthContext';
-import { getMockExamResults, getCategoryStats, getUserProfile } from '../../lib/firestore-service';
+import { getMockExamResults, getAllCategoryStats, getUserProfile } from '../../lib/firestore-service';
 import { analyzeWeakAreas, WeakArea } from '../../lib/ai-service';
 import { ZenColors, Spacing, FontSize, BorderRadius, Shadow } from '../../constants/Colors';
 
@@ -57,7 +57,7 @@ export default function WeakAreaAnalysisScreen() {
       const mockExamResults = await getMockExamResults(user.uid);
 
       // Get study stats
-      const categoryStats = await getCategoryStats(user.uid);
+      const categoryStats = await getAllCategoryStats(user.uid);
 
       if (mockExamResults.length === 0 && categoryStats.length === 0) {
         Alert.alert('データ不足', 'まず問題を解いてから分析を行ってください');

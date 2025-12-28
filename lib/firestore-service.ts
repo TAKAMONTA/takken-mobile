@@ -435,3 +435,24 @@ export async function getMockExamResults(userId: string): Promise<MockExamResult
     return [];
   }
 }
+
+// 全カテゴリの統計を取得
+export async function getAllCategoryStats(
+  uid: string
+): Promise<Array<{ category: string; totalQuestions: number; correctAnswers: number }>> {
+  const statsRef = doc(db, 'stats', uid);
+  const statsDoc = await getDoc(statsRef);
+
+  if (!statsDoc.exists()) {
+    return [];
+  }
+
+  const data = statsDoc.data();
+  const categoryStats = data.categoryStats || {};
+
+  return Object.entries(categoryStats).map(([category, stats]: [string, any]) => ({
+    category,
+    totalQuestions: stats.total || 0,
+    correctAnswers: stats.correct || 0,
+  }));
+}
