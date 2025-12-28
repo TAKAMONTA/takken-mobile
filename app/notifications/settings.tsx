@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, Pressable, Switch, Alert, Platform } from 'react-native';
+import { Stack } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -189,18 +190,15 @@ export default function NotificationSettingsScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <>
+      <Stack.Screen
+        options={{
+          title: '通知設定',
+          headerShown: true,
+        }}
+      />
+      <ScrollView style={styles.container}>
       <View style={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-          >
-            <Text style={styles.backButton}>← 戻る</Text>
-          </Pressable>
-        </View>
-
         {/* Title */}
         <View style={styles.titleSection}>
           <Text style={styles.title}>🔔 通知設定</Text>
@@ -346,6 +344,7 @@ export default function NotificationSettingsScreen() {
         </Pressable>
       </View>
     </ScrollView>
+    </>
   );
 }
 
