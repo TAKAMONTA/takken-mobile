@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     backgroundColor: ZenColors.background,
   },
   content: {
-    padding: Spacing.lg,
+    padding: Spacing.md,
   },
   welcome: {
     marginBottom: Spacing.xl,
@@ -261,23 +261,23 @@ const styles = StyleSheet.create({
     color: ZenColors.text.secondary,
   },
   section: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
   },
   sectionTitle: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.md,
     fontWeight: '600',
     color: ZenColors.text.primary,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   statsGrid: {
     flexDirection: 'row',
-    gap: Spacing.md,
+    gap: Spacing.sm,
   },
   statCard: {
     flex: 1,
     backgroundColor: ZenColors.surface,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: ZenColors.border,
     alignItems: 'center',
@@ -295,8 +295,8 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: ZenColors.surface,
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: ZenColors.border,
     ...Shadow.sm,
@@ -357,8 +357,8 @@ const styles = StyleSheet.create({
   premiumCard: {
     width: '48%',
     backgroundColor: '#FFF9E6',
-    padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.md,
     borderWidth: 2,
     borderColor: '#FFD700',
     alignItems: 'center',
