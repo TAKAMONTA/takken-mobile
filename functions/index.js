@@ -6,7 +6,7 @@ admin.initializeApp();
 
 // OpenAI client initialization
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: functions.config().openai.api_key,
 });
 
 // AI Chat Message
