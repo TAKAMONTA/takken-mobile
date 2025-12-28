@@ -83,7 +83,7 @@ export interface StudySession {
 
 // 問題データ
 export interface Question {
-  id: number;
+  id: number | string;
   question: string;
   choices: string[];  // options から choices に変更
   correctAnswer: number;

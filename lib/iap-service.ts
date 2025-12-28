@@ -11,6 +11,11 @@ import {
   PurchaseError,
 } from 'react-native-iap';
 import { updatePremiumStatus } from './firestore-service';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { app } from './firebase';
+import { Platform } from 'react-native';
+
+const functions = getFunctions(app);
 
 // App Store Connect で設定する商品ID
 export const PRODUCT_IDS = {
@@ -102,26 +107,53 @@ export async function purchaseSubscription(
   uid: string
 ): Promise<boolean> {
   try {
-    await requestPurchase({ sku: productId });
+    const purchase = await requestPurchase({ sku: productId });
     
-    // 購入成功後、Firestoreのプレミアムステータスを更新
-    await updatePremiumStatus(uid, true);
+    // レシート検証を実施
+    if (purchase && purchase.transactionReceipt) {
+      const isValid = await verifyReceipt(
+        purchase.transactionReceipt,
+        productId
+      );
+      
+      if (isValid) {
+        // 検証成功後、トランザクションを完了
+        await finishTransaction({ purchase, isConsumable: false });
+        return true;
+      } else {
+        console.error('Receipt verification failed');
+        return false;
+      }
+    }
     
-    return true;
+    return false;
   } catch (error) {
     console.error('Purchase error:', error);
     return false;
   }
 }
 
-// レシート検証（簡易版）
-// 本番環境では、サーバー側でAppleのレシート検証APIを使用する必要があります
-export async function verifyReceipt(receipt: string): Promise<boolean> {
-  // TODO: サーバー側でのレシート検証を実装
-  // https://developer.apple.com/documentation/appstorereceipts/verifyreceipt
-  
-  console.log('Receipt verification (stub):', receipt);
-  return true;
+// レシート検証（Cloud Functions経由）
+export async function verifyReceipt(
+  receipt: string,
+  productId: string
+): Promise<boolean> {
+  try {
+    const verifyIAPReceiptFn = httpsCallable(functions, 'verifyIAPReceipt');
+    const platform = Platform.OS === 'ios' ? 'ios' : 'android';
+    
+    const result = await verifyIAPReceiptFn({
+      receipt,
+      platform,
+      productId,
+    });
+    
+    const data = result.data as { isValid: boolean };
+    return data.isValid;
+  } catch (error) {
+    console.error('Receipt verification error:', error);
+    return false;
+  }
 }
 
 // プレミアムステータスの確認

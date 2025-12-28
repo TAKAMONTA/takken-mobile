@@ -3,6 +3,43 @@ import { User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEma
 import { auth, db } from './firebase';
 import { doc, deleteDoc, collection, query, where, getDocs } from 'firebase/firestore';
 
+// Firebase認証エラーをユーザーフレンドリーなメッセージに変換
+function getAuthErrorMessage(error: any): string {
+  const errorCode = error.code;
+  
+  // ユーザー列挙攻撃を防ぐため、認証エラーは一般化
+  switch (errorCode) {
+    case 'auth/user-not-found':
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':
+      return 'メールアドレスまたはパスワードが正しくありません';
+    
+    case 'auth/email-already-in-use':
+      return 'このメールアドレスは既に使用されています';
+    
+    case 'auth/weak-password':
+      return 'パスワードは6文字以上で設定してください';
+    
+    case 'auth/invalid-email':
+      return 'メールアドレスの形式が正しくありません';
+    
+    case 'auth/operation-not-allowed':
+      return 'この操作は許可されていません';
+    
+    case 'auth/too-many-requests':
+      return 'リクエストが多すぎます。しばらく時間をおいてから再度お試しください';
+    
+    case 'auth/network-request-failed':
+      return 'ネットワークエラーが発生しました。接続を確認してください';
+    
+    case 'auth/requires-recent-login':
+      return 'セキュリティのため、再度ログインしてください';
+    
+    default:
+      return '認証エラーが発生しました。しばらく時間をおいてから再度お試しください';
+  }
+}
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -32,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (error: any) {
-      throw new Error(error.message);
+      throw new Error(getAuthErrorMessage(error));
     }
   };
 
@@ -40,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
     } catch (error: any) {
-      throw new Error(error.message);
+      throw new Error(getAuthErrorMessage(error));
     }
   };
 
@@ -48,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signInAnonymously(auth);
     } catch (error: any) {
-      throw new Error(error.message);
+      throw new Error(getAuthErrorMessage(error));
     }
   };
 
@@ -56,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signOut(auth);
     } catch (error: any) {
-      throw new Error(error.message);
+      throw new Error(getAuthErrorMessage(error));
     }
   };
 
@@ -85,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Firebase Authenticationのユーザーを削除
       await deleteUser(user);
     } catch (error: any) {
-      throw new Error(error.message);
+      throw new Error(getAuthErrorMessage(error));
     }
   };
 

@@ -1,7 +1,9 @@
 import { Question } from './types';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { app } from './firebase';
 
-// OpenAI APIを使用したAI解説生成
-// 環境変数: EXPO_PUBLIC_OPENAI_API_KEY
+// Firebase Functions client
+const functions = getFunctions(app);
 
 // AI先生チャット機能
 export interface AIChatMessage {
@@ -14,48 +16,14 @@ export async function sendChatMessage(
   messages: AIChatMessage[],
   newMessage: string
 ): Promise<string> {
-  const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('OpenAI API key is not configured');
-  }
-
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'あなたは宅建試験の専門家です。受験者の質問に対して、わかりやすく丁寧に回答してください。法律の根拠や具体例を交えて説明してください。',
-          },
-          ...messages.map(msg => ({
-            role: msg.role,
-            content: msg.content,
-          })),
-          {
-            role: 'user',
-            content: newMessage,
-          },
-        ],
-        temperature: 0.7,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.choices[0].message.content;
+    const sendChatMessageFn = httpsCallable(functions, 'sendChatMessage');
+    const result = await sendChatMessageFn({ messages, newMessage });
+    const data = result.data as { content: string };
+    return data.content;
   } catch (error) {
     console.error('AI chat error:', error);
-    throw error;
+    throw new Error('AI先生との通信に失敗しました');
   }
 }
 
@@ -123,85 +91,23 @@ const categoryDetails: Record<string, CategoryInfo> = {
 };
 
 export async function generateAIQuestion(category: string): Promise<Question> {
-  const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('OpenAI API key is not configured');
-  }
-
   const categoryInfo = categoryDetails[category];
   
   if (!categoryInfo) {
     throw new Error('Invalid category');
   }
 
-  const prompt = `あなたは宅地建物取引士試験の問題作成の専門家です。
-
-以下の条件で${categoryInfo.name}の問題を1問作成してください：
-
-【カテゴリ】${categoryInfo.name}
-【説明】${categoryInfo.description}
-【トピック例】${categoryInfo.topics.join('、')}
-
-【要件】
-1. 実際の宅建試験と同レベルの難易度
-2. 4つの選択肢（1つが正解、3つが不正解）
-3. 選択肢は具体的で紛らわしいものにする
-4. 解説は200文字程度で、正解の根拠を明確に説明
-5. 問題文は100-200文字程度
-
-以下のJSON形式で出力してください：
-{
-  "question": "問題文",
-  "choices": ["選択肢1", "選択肢2", "選択肢3", "選択肢4"],
-  "correctAnswer": 0,
-  "explanation": "解説文",
-  "difficulty": "normal",
-  "year": 2025,
-  "tags": ["タグ1", "タグ2"]
-}
-
-※correctAnswerは正解の選択肢のインデックス（0-3）
-※difficultyは"easy", "normal", "hard"のいずれか
-※tagsは問題に関連するキーワードを2-3個`;
-
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4.1-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'あなたは宅地建物取引士試験の問題作成の専門家です。正確で実践的な問題を作成します。',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.8,
-        max_tokens: 1500,
-        response_format: { type: 'json_object' },
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices[0].message.content;
-    const questionData = JSON.parse(content);
+    const generateAIQuestionFn = httpsCallable(functions, 'generateAIQuestion');
+    const result = await generateAIQuestionFn({ category, categoryInfo });
+    const data = result.data as { question: any; category: string };
+    
+    const questionData = data.question;
 
     // Questionオブジェクトに変換
     const question: Question = {
       id: `ai_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      category,
+      category: data.category,
       question: questionData.question,
       choices: questionData.choices,
       correctAnswer: questionData.correctAnswer,
@@ -218,7 +124,6 @@ export async function generateAIQuestion(category: string): Promise<Question> {
   }
 }
 
-
 // AI解説生成
 export async function generateAIExplanation(
   question: string,
@@ -227,64 +132,15 @@ export async function generateAIExplanation(
   originalExplanation: string
 ): Promise<string> {
   try {
-    const prompt = `以下の宅建試験問題について、初心者にもわかりやすく詳しく解説してください。
-
-【問題】
-${question}
-
-【選択肢】
-${choices.map((choice, index) => `${index + 1}. ${choice}`).join('\n')}
-
-【正解】
-${correctAnswer + 1}. ${choices[correctAnswer]}
-
-【基本解説】
-${originalExplanation}
-
-【AI解説の要件】
-1. なぜこの選択肢が正解なのか、法律の根拠を含めて説明
-2. 他の選択肢がなぜ間違っているのか、それぞれ説明
-3. 関連する法律や条文を具体的に示す
-4. 実務での適用例や覚え方のコツを提示
-5. 初心者にもわかりやすい言葉で説明
-
-400文字以内で簡潔に説明してください。`;
-
-    const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error('OpenAI API key is not configured');
-    }
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4.1-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'あなたは宅建試験の専門講師です。受験生が理解しやすいように、わかりやすく丁寧に解説してください。',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 1000,
-      }),
+    const generateAIExplanationFn = httpsCallable(functions, 'generateAIExplanation');
+    const result = await generateAIExplanationFn({
+      question,
+      choices,
+      correctAnswer,
+      originalExplanation,
     });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    return data.choices[0]?.message?.content || '解説の生成に失敗しました。';
+    const data = result.data as { explanation: string };
+    return data.explanation;
   } catch (error) {
     console.error('Error generating AI explanation:', error);
     throw new Error('AI解説の生成に失敗しました');
@@ -299,59 +155,10 @@ export async function generateStudyAdvice(stats: {
   categoryStats: Array<{ category: string; correctRate: number; count: number }>;
 }): Promise<string> {
   try {
-    const prompt = `以下の学習データを分析して、次に何を勉強すべきか具体的なアドバイスをしてください。
-
-【学習データ】
-- 総問題数: ${stats.totalQuestions}問
-- 正答率: ${stats.correctRate}%
-- 学習日数: ${stats.studyDays}日
-
-【カテゴリ別成績】
-${stats.categoryStats.map(cat => `- ${cat.category}: ${cat.count}問、正答率${cat.correctRate}%`).join('\n')}
-
-【アドバイスの要件】
-1. 現在の学習状況の評価
-2. 優先的に学習すべき分野
-3. 具体的な学習方法の提案
-4. 目標設定のアドバイス
-
-200文字以内で簡潔にアドバイスしてください。`;
-
-    const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error('OpenAI API key is not configured');
-    }
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4.1-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'あなたは宅建試験の学習アドバイザーです。受験生の学習状況を分析し、効果的な学習方法を提案してください。',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 500,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    return data.choices[0]?.message?.content || 'アドバイスの生成に失敗しました。';
+    const generateStudyAdviceFn = httpsCallable(functions, 'generateStudyAdvice');
+    const result = await generateStudyAdviceFn({ stats });
+    const data = result.data as { advice: string };
+    return data.advice;
   } catch (error) {
     console.error('Error generating study advice:', error);
     throw new Error('学習アドバイスの生成に失敗しました');
@@ -366,59 +173,10 @@ export async function analyzeWeaknesses(incorrectQuestions: Array<{
   correctAnswer: number;
 }>): Promise<string> {
   try {
-    const prompt = `以下の間違えた問題を分析して、学習者の弱点パターンを特定してください。
-
-【間違えた問題】
-${incorrectQuestions.slice(0, 10).map((q, i) => `
-${i + 1}. カテゴリ: ${q.category}
-問題: ${q.question.substring(0, 100)}...
-選んだ答え: ${q.userAnswer + 1}
-正解: ${q.correctAnswer + 1}
-`).join('\n')}
-
-【分析の要件】
-1. 共通する間違いのパターン
-2. 理解が不足している分野
-3. 改善のための具体的な学習方法
-4. 注意すべきポイント
-
-300文字以内で分析結果を提示してください。`;
-
-    const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error('OpenAI API key is not configured');
-    }
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4.1-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'あなたは宅建試験の分析専門家です。受験生の間違いパターンを分析し、効果的な改善方法を提案してください。',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 800,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    return data.choices[0]?.message?.content || '分析に失敗しました。';
+    const analyzeWeaknessesFn = httpsCallable(functions, 'analyzeWeaknesses');
+    const result = await analyzeWeaknessesFn({ incorrectQuestions });
+    const data = result.data as { analysis: string };
+    return data.analysis;
   } catch (error) {
     console.error('Error analyzing weaknesses:', error);
     throw new Error('弱点分析に失敗しました');
@@ -434,242 +192,134 @@ export async function askAIQuestion(
   userQuestion: string
 ): Promise<string> {
   try {
-    const prompt = `以下の宅建試験問題について、受験生からの質問に答えてください。
-
-【問題】
-${question}
-
-【選択肢】
-${choices.map((choice, index) => `${index + 1}. ${choice}`).join('\n')}
-
-【正解】
-${correctAnswer + 1}. ${choices[correctAnswer]}
-
-【解説】
-${explanation}
-
-【受験生からの質問】
-${userQuestion}
-
-わかりやすく丁寧に回答してください（200文字以内）。`;
-
-    const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error('OpenAI API key is not configured');
-    }
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4.1-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'あなたは宅建試験の専門講師です。受験生の質問に対して、わかりやすく丁寧に回答してください。',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 500,
-      }),
+    const askAIQuestionFn = httpsCallable(functions, 'askAIQuestion');
+    const result = await askAIQuestionFn({
+      question,
+      choices,
+      correctAnswer,
+      explanation,
+      userQuestion,
     });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    return data.choices[0]?.message?.content || '回答の生成に失敗しました。';
+    const data = result.data as { answer: string };
+    return data.answer;
   } catch (error) {
     console.error('Error asking AI question:', error);
     throw new Error('AI質問の回答に失敗しました');
   }
 }
 
-// Weak area analysis
+// Weak area analysis (keeping the existing interface for compatibility)
 export interface WeakAreaAnalysisRequest {
   mockExamResults: Array<{
     score: number;
     totalQuestions: number;
+    percentage: number;
     categoryStats: { [key: string]: { correct: number; total: number } };
+  }>;
+  trueFalseResults: Array<{
+    totalQuestions: number;
+    correctCount: number;
+    accuracy: number;
   }>;
   studyStats: {
     totalQuestions: number;
     correctAnswers: number;
-    categoryStats: { [key: string]: { total: number; correct: number } };
+    categoryStats: {
+      [category: string]: {
+        total: number;
+        correct: number;
+      };
+    };
   };
 }
 
-export interface WeakArea {
-  category: string;
-  correctRate: number;
-  totalQuestions: number;
-  incorrectCount: number;
-  priority: number; // 1-5, 5 being highest priority
-  improvementPotential: number; // Expected score increase if improved
-  recommendedStudyTime: string;
-  recommendedQuestionCount: number;
-  advice: string;
+export interface WeakAreaAnalysisResult {
+  weakestCategory: string;
+  weakestCategoryName: string;
+  weakestAccuracy: number;
+  recommendations: string[];
+  priorityAreas: Array<{
+    category: string;
+    categoryName: string;
+    accuracy: number;
+    priority: 'high' | 'medium' | 'low';
+  }>;
 }
 
-export async function analyzeWeakAreas(request: WeakAreaAnalysisRequest): Promise<WeakArea[]> {
-  try {
-    const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error('OpenAI API key not found');
-    }
+export async function analyzeWeakAreas(
+  request: WeakAreaAnalysisRequest
+): Promise<WeakAreaAnalysisResult> {
+  // This function uses local analysis, not AI
+  const categoryNames: Record<string, string> = {
+    takkengyouhou: '宅建業法',
+    minpou: '権利関係',
+    hourei: '法令上の制限',
+    zei: '税・その他',
+  };
 
-    // Prepare analysis data
-    const categoryData: { [key: string]: { correct: number; total: number } } = {};
-    
-    // Combine mock exam results
-    request.mockExamResults.forEach(result => {
-      Object.entries(result.categoryStats).forEach(([category, stats]) => {
-        if (!categoryData[category]) {
-          categoryData[category] = { correct: 0, total: 0 };
-        }
-        categoryData[category].correct += stats.correct;
-        categoryData[category].total += stats.total;
-      });
-    });
+  const categoryAccuracies: Record<string, { total: number; correct: number }> = {};
 
-    // Add study stats
-    Object.entries(request.studyStats.categoryStats).forEach(([category, stats]) => {
-      if (!categoryData[category]) {
-        categoryData[category] = { correct: 0, total: 0 };
+  // Aggregate from all sources
+  request.mockExamResults.forEach(result => {
+    Object.entries(result.categoryStats).forEach(([category, stats]) => {
+      if (!categoryAccuracies[category]) {
+        categoryAccuracies[category] = { total: 0, correct: 0 };
       }
-      categoryData[category].correct += stats.correct;
-      categoryData[category].total += stats.total;
+      categoryAccuracies[category].total += stats.total;
+      categoryAccuracies[category].correct += stats.correct;
     });
+  });
 
-    // Calculate basic metrics
-    const weakAreas: WeakArea[] = Object.entries(categoryData).map(([category, stats]) => {
-      const correctRate = stats.total > 0 ? (stats.correct / stats.total) * 100 : 0;
-      const incorrectCount = stats.total - stats.correct;
-      
-      // Calculate priority (lower correct rate = higher priority)
-      let priority = 5;
-      if (correctRate >= 80) priority = 1;
-      else if (correctRate >= 70) priority = 2;
-      else if (correctRate >= 60) priority = 3;
-      else if (correctRate >= 50) priority = 4;
-      
-      // Calculate improvement potential (more incorrect answers = more potential)
-      const improvementPotential = Math.round(incorrectCount * 0.7); // Assume 70% improvement rate
-      
-      // Recommend study time and question count
-      let recommendedStudyTime = '1-2時間';
-      let recommendedQuestionCount = 20;
-      
-      if (correctRate < 50) {
-        recommendedStudyTime = '3-4時間';
-        recommendedQuestionCount = 40;
-      } else if (correctRate < 70) {
-        recommendedStudyTime = '2-3時間';
-        recommendedQuestionCount = 30;
-      }
-
-      return {
-        category,
-        correctRate: Math.round(correctRate),
-        totalQuestions: stats.total,
-        incorrectCount,
-        priority,
-        improvementPotential,
-        recommendedStudyTime,
-        recommendedQuestionCount,
-        advice: '', // Will be filled by AI
-      };
-    });
-
-    // Sort by priority (highest first)
-    weakAreas.sort((a, b) => b.priority - a.priority);
-
-    // Get AI advice for top 3 weak areas
-    const top3 = weakAreas.slice(0, 3);
-    
-    if (top3.length === 0) {
-      return weakAreas;
+  Object.entries(request.studyStats.categoryStats).forEach(([category, stats]) => {
+    if (!categoryAccuracies[category]) {
+      categoryAccuracies[category] = { total: 0, correct: 0 };
     }
+    categoryAccuracies[category].total += stats.total;
+    categoryAccuracies[category].correct += stats.correct;
+  });
 
-    const prompt = `あなたは宅建試験の学習アドバイザーです。以下の弱点分野について、具体的な学習アドバイスを1文で簡潔に提供してください。
+  // Calculate accuracies
+  const accuracies = Object.entries(categoryAccuracies).map(([category, stats]) => ({
+    category,
+    categoryName: categoryNames[category] || category,
+    accuracy: stats.total > 0 ? (stats.correct / stats.total) * 100 : 0,
+    total: stats.total,
+  }));
 
-弱点分野:
-${top3.map(area => `- ${area.category}: 正答率${area.correctRate}%、${area.incorrectCount}問間違い`).join('\n')}
+  // Sort by accuracy (ascending)
+  accuracies.sort((a, b) => a.accuracy - b.accuracy);
 
-各分野について、以下のJSON形式で回答してください:
-{
-  "advice": {
-    "${top3[0]?.category}": "具体的なアドバイス",
-    "${top3[1]?.category || ''}": "具体的なアドバイス",
-    "${top3[2]?.category || ''}": "具体的なアドバイス"
+  const weakest = accuracies[0];
+
+  // Determine priority
+  const priorityAreas = accuracies.map(area => ({
+    category: area.category,
+    categoryName: area.categoryName,
+    accuracy: area.accuracy,
+    priority: (area.accuracy < 60 ? 'high' : area.accuracy < 75 ? 'medium' : 'low') as 'high' | 'medium' | 'low',
+  }));
+
+  // Generate recommendations
+  const recommendations: string[] = [];
+  
+  if (weakest.accuracy < 50) {
+    recommendations.push(`${weakest.categoryName}の基礎から復習することをお勧めします`);
+  } else if (weakest.accuracy < 70) {
+    recommendations.push(`${weakest.categoryName}の重要ポイントを重点的に学習しましょう`);
+  } else {
+    recommendations.push(`${weakest.categoryName}の応用問題に挑戦しましょう`);
   }
-}`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4.1-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'あなたは宅建試験の学習アドバイザーです。簡潔で実践的なアドバイスを提供してください。',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 500,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to get AI advice');
-    }
-
-    const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
-    
-    // Parse AI response
-    try {
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const adviceData = JSON.parse(jsonMatch[0]);
-        
-        // Apply AI advice to weak areas
-        weakAreas.forEach(area => {
-          if (adviceData.advice[area.category]) {
-            area.advice = adviceData.advice[area.category];
-          } else {
-            area.advice = `${area.category}の基礎をしっかり復習し、過去問を繰り返し解きましょう。`;
-          }
-        });
-      }
-    } catch (parseError) {
-      console.error('Error parsing AI advice:', parseError);
-      // Provide default advice
-      weakAreas.forEach(area => {
-        area.advice = `${area.category}の基礎をしっかり復習し、過去問を繰り返し解きましょう。`;
-      });
-    }
-
-    return weakAreas;
-  } catch (error) {
-    console.error('Error analyzing weak areas:', error);
-    throw error;
+  const highPriorityAreas = priorityAreas.filter(a => a.priority === 'high');
+  if (highPriorityAreas.length > 1) {
+    recommendations.push('複数の分野で基礎固めが必要です。1つずつ確実に進めましょう');
   }
+
+  return {
+    weakestCategory: weakest.category,
+    weakestCategoryName: weakest.categoryName,
+    weakestAccuracy: weakest.accuracy,
+    recommendations,
+    priorityAreas,
+  };
 }

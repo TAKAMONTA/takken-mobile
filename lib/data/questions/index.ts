@@ -8,7 +8,7 @@ import { Question } from "@/lib/types/quiz";
 // } from "@/lib/study-utils";
 // ビルド時の実行を避けるため、インポートをコメントアウト
 // import { frequency10y } from "@/lib/data/past-exams/frequency";
-import { logger } from "@/lib/logger";
+// Logger import removed - was unused
 
 // ビルド時の実行を避けるため、問題データのインポートを動的に変更
 // 静的なインポートはビルド時に実行されるため、エラーを引き起こす可能性がある
