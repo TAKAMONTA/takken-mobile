@@ -56,7 +56,7 @@ export async function scheduleDailyReminder(hour: number, minute: number): Promi
     // Cancel existing daily reminder
     await cancelDailyReminder();
 
-    const trigger: Notifications.DailyTriggerInput = {
+    const trigger: Notifications.CalendarTriggerInput = {
       hour,
       minute,
       repeats: true,
