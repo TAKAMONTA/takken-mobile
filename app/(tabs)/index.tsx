@@ -153,6 +153,17 @@ export default function DashboardScreen() {
                 <Text style={styles.premiumTitle}>間隔反復学習</Text>
                 <Text style={styles.premiumDescription}>間違えた問題を復習</Text>
               </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.premiumCard,
+                  pressed && styles.premiumCardPressed,
+                ]}
+                onPress={() => router.push('/true-false')}
+              >
+                <Text style={styles.premiumIcon}>◯×</Text>
+                <Text style={styles.premiumTitle}>◯×問題</Text>
+                <Text style={styles.premiumDescription}>正誤判定で知識を確認</Text>
+              </Pressable>
             </View>
           </View>
         )}
@@ -340,10 +351,11 @@ const styles = StyleSheet.create({
   },
   premiumGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Spacing.md,
   },
   premiumCard: {
-    flex: 1,
+    width: '48%',
     backgroundColor: '#FFF9E6',
     padding: Spacing.md,
     borderRadius: BorderRadius.lg,

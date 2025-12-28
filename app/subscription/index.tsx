@@ -45,6 +45,7 @@ export default function SubscriptionScreen() {
   const premiumFeatures = [
     { icon: '🤖', text: 'AI問題生成（無制限）' },
     { icon: '🔄', text: '間隔反復学習（復習機能）' },
+    { icon: '◯×', text: '◯×問題モード' },
     { icon: '📊', text: '詳細学習分析' },
     { icon: '🚫', text: '広告完全非表示' },
   ];
