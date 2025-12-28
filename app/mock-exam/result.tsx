@@ -225,9 +225,19 @@ export default function MockExamResultScreen() {
               styles.actionButtonPrimary,
               pressed && styles.buttonPressed,
             ]}
+            onPress={() => router.push('/weak-area')}
+          >
+            <Text style={styles.actionButtonTextPrimary}>🎯 弱点分野を特定する</Text>
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionButton,
+              pressed && styles.buttonPressed,
+            ]}
             onPress={() => router.push('/mock-exam')}
           >
-            <Text style={styles.actionButtonTextPrimary}>もう一度挑戦</Text>
+            <Text style={styles.actionButtonText}>もう一度挑戦</Text>
           </Pressable>
 
           <Pressable

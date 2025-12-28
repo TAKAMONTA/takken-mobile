@@ -216,6 +216,22 @@ export default function StatsScreen() {
           </View>
         )}
 
+        {/* 弱点分野分析 */}
+        {isPremium && stats && stats.totalQuestions > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🎯 弱点分野分析</Text>
+            <Pressable
+              style={({ pressed }) => [
+                styles.weakAreaButton,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={() => router.push('/weak-area')}
+            >
+              <Text style={styles.weakAreaButtonText}>弱点分野を特定する →</Text>
+            </Pressable>
+          </View>
+        )}
+
         {/* AI弱点分析 */}
         {isPremium && stats && stats.totalQuestions > 0 && (
           <View style={styles.section}>
@@ -539,5 +555,17 @@ const styles = StyleSheet.create({
   legendText: {
     fontSize: FontSize.sm,
     color: ZenColors.text.secondary,
+  },
+  weakAreaButton: {
+    backgroundColor: ZenColors.primary,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    ...Shadow.small,
+  },
+  weakAreaButtonText: {
+    color: ZenColors.text.inverse,
+    fontSize: FontSize.md,
+    fontWeight: '600',
   },
 });

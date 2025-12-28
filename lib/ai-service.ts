@@ -493,3 +493,183 @@ ${userQuestion}
     throw new Error('AI質問の回答に失敗しました');
   }
 }
+
+// Weak area analysis
+export interface WeakAreaAnalysisRequest {
+  mockExamResults: Array<{
+    score: number;
+    totalQuestions: number;
+    categoryStats: { [key: string]: { correct: number; total: number } };
+  }>;
+  studyStats: {
+    totalQuestions: number;
+    correctAnswers: number;
+    categoryStats: { [key: string]: { total: number; correct: number } };
+  };
+}
+
+export interface WeakArea {
+  category: string;
+  correctRate: number;
+  totalQuestions: number;
+  incorrectCount: number;
+  priority: number; // 1-5, 5 being highest priority
+  improvementPotential: number; // Expected score increase if improved
+  recommendedStudyTime: string;
+  recommendedQuestionCount: number;
+  advice: string;
+}
+
+export async function analyzeWeakAreas(request: WeakAreaAnalysisRequest): Promise<WeakArea[]> {
+  try {
+    const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('OpenAI API key not found');
+    }
+
+    // Prepare analysis data
+    const categoryData: { [key: string]: { correct: number; total: number } } = {};
+    
+    // Combine mock exam results
+    request.mockExamResults.forEach(result => {
+      Object.entries(result.categoryStats).forEach(([category, stats]) => {
+        if (!categoryData[category]) {
+          categoryData[category] = { correct: 0, total: 0 };
+        }
+        categoryData[category].correct += stats.correct;
+        categoryData[category].total += stats.total;
+      });
+    });
+
+    // Add study stats
+    Object.entries(request.studyStats.categoryStats).forEach(([category, stats]) => {
+      if (!categoryData[category]) {
+        categoryData[category] = { correct: 0, total: 0 };
+      }
+      categoryData[category].correct += stats.correct;
+      categoryData[category].total += stats.total;
+    });
+
+    // Calculate basic metrics
+    const weakAreas: WeakArea[] = Object.entries(categoryData).map(([category, stats]) => {
+      const correctRate = stats.total > 0 ? (stats.correct / stats.total) * 100 : 0;
+      const incorrectCount = stats.total - stats.correct;
+      
+      // Calculate priority (lower correct rate = higher priority)
+      let priority = 5;
+      if (correctRate >= 80) priority = 1;
+      else if (correctRate >= 70) priority = 2;
+      else if (correctRate >= 60) priority = 3;
+      else if (correctRate >= 50) priority = 4;
+      
+      // Calculate improvement potential (more incorrect answers = more potential)
+      const improvementPotential = Math.round(incorrectCount * 0.7); // Assume 70% improvement rate
+      
+      // Recommend study time and question count
+      let recommendedStudyTime = '1-2時間';
+      let recommendedQuestionCount = 20;
+      
+      if (correctRate < 50) {
+        recommendedStudyTime = '3-4時間';
+        recommendedQuestionCount = 40;
+      } else if (correctRate < 70) {
+        recommendedStudyTime = '2-3時間';
+        recommendedQuestionCount = 30;
+      }
+
+      return {
+        category,
+        correctRate: Math.round(correctRate),
+        totalQuestions: stats.total,
+        incorrectCount,
+        priority,
+        improvementPotential,
+        recommendedStudyTime,
+        recommendedQuestionCount,
+        advice: '', // Will be filled by AI
+      };
+    });
+
+    // Sort by priority (highest first)
+    weakAreas.sort((a, b) => b.priority - a.priority);
+
+    // Get AI advice for top 3 weak areas
+    const top3 = weakAreas.slice(0, 3);
+    
+    if (top3.length === 0) {
+      return weakAreas;
+    }
+
+    const prompt = `あなたは宅建試験の学習アドバイザーです。以下の弱点分野について、具体的な学習アドバイスを1文で簡潔に提供してください。
+
+弱点分野:
+${top3.map(area => `- ${area.category}: 正答率${area.correctRate}%、${area.incorrectCount}問間違い`).join('\n')}
+
+各分野について、以下のJSON形式で回答してください:
+{
+  "advice": {
+    "${top3[0]?.category}": "具体的なアドバイス",
+    "${top3[1]?.category || ''}": "具体的なアドバイス",
+    "${top3[2]?.category || ''}": "具体的なアドバイス"
+  }
+}`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4.1-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'あなたは宅建試験の学習アドバイザーです。簡潔で実践的なアドバイスを提供してください。',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to get AI advice');
+    }
+
+    const data = await response.json();
+    const aiResponse = data.choices[0].message.content;
+    
+    // Parse AI response
+    try {
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const adviceData = JSON.parse(jsonMatch[0]);
+        
+        // Apply AI advice to weak areas
+        weakAreas.forEach(area => {
+          if (adviceData.advice[area.category]) {
+            area.advice = adviceData.advice[area.category];
+          } else {
+            area.advice = `${area.category}の基礎をしっかり復習し、過去問を繰り返し解きましょう。`;
+          }
+        });
+      }
+    } catch (parseError) {
+      console.error('Error parsing AI advice:', parseError);
+      // Provide default advice
+      weakAreas.forEach(area => {
+        area.advice = `${area.category}の基礎をしっかり復習し、過去問を繰り返し解きましょう。`;
+      });
+    }
+
+    return weakAreas;
+  } catch (error) {
+    console.error('Error analyzing weak areas:', error);
+    throw error;
+  }
+}
