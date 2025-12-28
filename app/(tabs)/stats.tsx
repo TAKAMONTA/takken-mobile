@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Pressable, Alert
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { useAuth } from '../../lib/AuthContext';
-import { getStudyStats, StudyStats, getCategoryStats, getIncorrectQuestions, getUserProfile } from '../../lib/firestore-service';
+import { getStudyStats, StudyStats, getCategoryStats, getIncorrectQuestions, getUserProfile, getTrueFalseQuizResults, TrueFalseQuizResult } from '../../lib/firestore-service';
 import { analyzeWeaknesses } from '../../lib/ai-service';
 import { getQuestionById } from '../../lib/question-service';
 import { ZenColors, Spacing, FontSize, BorderRadius, Shadow } from '../../constants/Colors';
@@ -15,6 +15,7 @@ export default function StatsScreen() {
   const [isPremium, setIsPremium] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
+  const [trueFalseResults, setTrueFalseResults] = useState<TrueFalseQuizResult[]>([]);
 
   useEffect(() => {
     loadStats();
@@ -41,6 +42,10 @@ export default function StatsScreen() {
         categoryData[category] = catStats;
       }
       setCategoryStats(categoryData);
+      
+      // Load true/false quiz results
+      const tfResults = await getTrueFalseQuizResults(user.uid);
+      setTrueFalseResults(tfResults);
     } catch (error) {
       console.error('Error loading stats:', error);
     } finally {
@@ -178,6 +183,38 @@ export default function StatsScreen() {
             })}
           </View>
         </View>
+
+        {/* ◯×問題の正答率推移 */}
+        {isPremium && trueFalseResults.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>◯×問題の正答率推移</Text>
+            <View style={styles.card}>
+              <View style={styles.graphContainer}>
+                {trueFalseResults.slice().reverse().map((result, index) => {
+                  const maxHeight = 150;
+                  const barHeight = (result.accuracy / 100) * maxHeight;
+                  const date = new Date(result.completedAt);
+                  const dateLabel = `${date.getMonth() + 1}/${date.getDate()}`;
+                  
+                  return (
+                    <View key={index} style={styles.graphBar}>
+                      <View style={styles.barContainer}>
+                        <View style={[styles.bar, { height: barHeight }]}>
+                          <Text style={styles.barLabel}>{result.accuracy}%</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.barDateLabel}>{dateLabel}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+              <View style={styles.graphLegend}>
+                <Text style={styles.legendText}>最近{trueFalseResults.length}回の結果</Text>
+                <Text style={styles.legendText}>平均: {Math.round(trueFalseResults.reduce((sum, r) => sum + r.accuracy, 0) / trueFalseResults.length)}%</Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* AI弱点分析 */}
         {isPremium && stats && stats.totalQuestions > 0 && (
@@ -452,5 +489,55 @@ const styles = StyleSheet.create({
     color: ZenColors.text.secondary,
     fontSize: FontSize.sm,
     fontWeight: '600',
+  },
+  graphContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'flex-end',
+    height: 180,
+    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.xs,
+  },
+  graphBar: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: Spacing.xs,
+  },
+  barContainer: {
+    width: '100%',
+    height: 150,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  bar: {
+    width: '80%',
+    backgroundColor: ZenColors.primary,
+    borderTopLeftRadius: BorderRadius.sm,
+    borderTopRightRadius: BorderRadius.sm,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingTop: Spacing.xs,
+    minHeight: 30,
+  },
+  barLabel: {
+    fontSize: FontSize.xs,
+    fontWeight: '600',
+    color: ZenColors.text.inverse,
+  },
+  barDateLabel: {
+    fontSize: FontSize.xs,
+    color: ZenColors.text.secondary,
+    marginTop: Spacing.xs,
+  },
+  graphLegend: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: ZenColors.border,
+  },
+  legendText: {
+    fontSize: FontSize.sm,
+    color: ZenColors.text.secondary,
   },
 });

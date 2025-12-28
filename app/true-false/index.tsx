@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { useAuth } from '../../lib/AuthContext';
 import { getQuestionsByCategory } from '../../lib/question-service';
 import { Question } from '../../lib/types';
-import { saveStudySession, getUserProfile } from '../../lib/firestore-service';
+import { saveStudySession, getUserProfile, saveTrueFalseQuizResult } from '../../lib/firestore-service';
 import { ZenColors, Spacing, FontSize, BorderRadius, Shadow } from '../../constants/Colors';
 
 // ○×問題用の型
@@ -145,16 +145,31 @@ export default function TrueFalseScreen() {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setSelectedAnswer(null);
       setShowExplanation(false);
     } else {
-      // 最終結果を表示
+      // 最終結果を保存
       const accuracy = Math.round((correctCount / questions.length) * 100);
+      
+      if (user) {
+        try {
+          await saveTrueFalseQuizResult({
+            userId: user.uid,
+            totalQuestions: questions.length,
+            correctCount,
+            accuracy,
+            completedAt: new Date(),
+          });
+        } catch (error) {
+          console.error('Error saving quiz result:', error);
+        }
+      }
+      
       Alert.alert(
-        '○×問題完了！',
+        '◯×問題完了！',
         `正解数: ${correctCount}/${questions.length}\n正答率: ${accuracy}%`,
         [{ text: 'OK', onPress: () => router.back() }]
       );

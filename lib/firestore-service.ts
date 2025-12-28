@@ -321,3 +321,56 @@ export async function getIncorrectQuestionsByCategory(
     timestamp: doc.data().timestamp?.toDate() || new Date(),
   } as StudySession));
 }
+
+// ○×問題の結果を保存
+export interface TrueFalseQuizResult {
+  userId: string;
+  totalQuestions: number;
+  correctCount: number;
+  accuracy: number;
+  completedAt: Date;
+}
+
+export async function saveTrueFalseQuizResult(result: TrueFalseQuizResult): Promise<void> {
+  try {
+    const resultsRef = collection(db, 'trueFalseResults');
+    await setDoc(doc(resultsRef), {
+      userId: result.userId,
+      totalQuestions: result.totalQuestions,
+      correctCount: result.correctCount,
+      accuracy: result.accuracy,
+      completedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error('Error saving true/false quiz result:', error);
+    throw error;
+  }
+}
+
+// ○×問題の結果を取得
+export async function getTrueFalseQuizResults(userId: string): Promise<TrueFalseQuizResult[]> {
+  try {
+    const resultsRef = collection(db, 'trueFalseResults');
+    const q = query(
+      resultsRef,
+      where('userId', '==', userId),
+      orderBy('completedAt', 'desc'),
+      limit(10)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        userId: data.userId,
+        totalQuestions: data.totalQuestions,
+        correctCount: data.correctCount,
+        accuracy: data.accuracy,
+        completedAt: data.completedAt?.toDate() || new Date(),
+      };
+    });
+  } catch (error) {
+    console.error('Error getting true/false quiz results:', error);
+    return [];
+  }
+}
