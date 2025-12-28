@@ -112,8 +112,11 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>設定</Text>
           
-          <Pressable style={styles.menuItem}>
-            <Text style={styles.menuText}>通知設定</Text>
+          <Pressable 
+            style={styles.menuItem}
+            onPress={() => router.push('/notifications/settings')}
+          >
+            <Text style={styles.menuText}>🔔 通知設定</Text>
           </Pressable>
 
           <Pressable style={styles.menuItem}>
