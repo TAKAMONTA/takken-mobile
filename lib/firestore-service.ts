@@ -374,3 +374,64 @@ export async function getTrueFalseQuizResults(userId: string): Promise<TrueFalse
     return [];
   }
 }
+
+// Mock exam result types and functions
+export interface MockExamResult {
+  userId: string;
+  score: number;
+  totalQuestions: number;
+  percentage: number;
+  isPassed: boolean;
+  timeUsed: number;
+  categoryStats: { [key: string]: { correct: number; total: number } };
+  completedAt: Date;
+}
+
+export async function saveMockExamResult(result: MockExamResult): Promise<void> {
+  try {
+    const resultsRef = collection(db, 'mockExamResults');
+    await setDoc(doc(resultsRef), {
+      userId: result.userId,
+      score: result.score,
+      totalQuestions: result.totalQuestions,
+      percentage: result.percentage,
+      isPassed: result.isPassed,
+      timeUsed: result.timeUsed,
+      categoryStats: result.categoryStats,
+      completedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error('Error saving mock exam result:', error);
+    throw error;
+  }
+}
+
+export async function getMockExamResults(userId: string): Promise<MockExamResult[]> {
+  try {
+    const resultsRef = collection(db, 'mockExamResults');
+    const q = query(
+      resultsRef,
+      where('userId', '==', userId),
+      orderBy('completedAt', 'desc'),
+      limit(10)
+    );
+
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        userId: data.userId,
+        score: data.score,
+        totalQuestions: data.totalQuestions,
+        percentage: data.percentage,
+        isPassed: data.isPassed,
+        timeUsed: data.timeUsed,
+        categoryStats: data.categoryStats,
+        completedAt: data.completedAt?.toDate() || new Date(),
+      };
+    });
+  } catch (error) {
+    console.error('Error getting mock exam results:', error);
+    return [];
+  }
+}

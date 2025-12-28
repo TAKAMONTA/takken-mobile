@@ -164,6 +164,17 @@ export default function DashboardScreen() {
                 <Text style={styles.premiumTitle}>◯×問題</Text>
                 <Text style={styles.premiumDescription}>正誤判定で知識を確認</Text>
               </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.premiumCard,
+                  pressed && styles.premiumCardPressed,
+                ]}
+                onPress={() => router.push('/mock-exam')}
+              >
+                <Text style={styles.premiumIcon}>📝</Text>
+                <Text style={styles.premiumTitle}>模擬試験</Text>
+                <Text style={styles.premiumDescription}>本番形式で実力を試す</Text>
+              </Pressable>
             </View>
           </View>
         )}
