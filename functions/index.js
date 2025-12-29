@@ -1,12 +1,17 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const OpenAI = require('openai');
+const { defineString } = require('firebase-functions/params');
 
 admin.initializeApp();
 
+// 環境変数の定義
+const openaiApiKey = defineString('OPENAI_API_KEY');
+const appleSharedSecret = defineString('APPLE_SHARED_SECRET');
+
 // OpenAI client initialization
 const openai = new OpenAI({
-  apiKey: functions.config().openai.api_key,
+  apiKey: openaiApiKey.value(),
 });
 
 // AI Chat Message
@@ -415,7 +420,7 @@ exports.verifyIAPReceipt = functions.https.onCall(async (data, context) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             'receipt-data': receipt,
-            password: process.env.APPLE_SHARED_SECRET,
+            password: appleSharedSecret.value(),
           }),
         }
       );

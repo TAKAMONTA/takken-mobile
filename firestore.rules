@@ -140,6 +140,12 @@ service cloud.firestore {
                        resource.data.userId == request.auth.uid;
     }
     
+    // 問題データ（読み取り専用）
+    match /questions/{questionId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // 管理者のみが書き込み可能（Cloud Functionsから）
+    }
+    
     // 学習プラン（studyPlans コレクション）- 将来の実装用
     match /studyPlans/{planId} {
       // 読み取り：自分のプランのみ
