@@ -34,13 +34,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="stats"
-        options={{
-          title: '分析',
-          tabBarLabel: '分析',
-        }}
-      />
-      <Tabs.Screen
         name="profile"
         options={{
           title: 'プロフィール',
