@@ -1,0 +1,205 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ヘルパー関数：ユーザー認証チェック
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // ヘルパー関数：ユーザー自身のデータかチェック
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+    
+    // ヘルパー関数：データの所有者かチェック
+    function isDataOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+    
+    // ヘルパー関数：新規データの所有者かチェック
+    function isNewDataOwner() {
+      return isAuthenticated() && request.auth.uid == request.resource.data.uid;
+    }
+    
+    // ヘルパー関数：プレミアムユーザーかチェック
+    function isPremiumUser() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isPremium == true;
+    }
+    
+    // ヘルパー関数：必須フィールドの検証
+    function hasRequiredUserFields() {
+      return request.resource.data.keys().hasAll(['uid', 'email', 'isPremium', 'createdAt', 'lastLoginAt']);
+    }
+    
+    function hasRequiredStatsFields() {
+      return request.resource.data.keys().hasAll([
+        'uid', 'totalQuestions', 'correctAnswers', 'totalStudyTime', 
+        'studyDays', 'currentStreak', 'categoryStats'
+      ]);
+    }
+    
+    function hasRequiredSessionFields() {
+      return request.resource.data.keys().hasAll([
+        'uid', 'category', 'questionId', 'userAnswer', 
+        'correctAnswer', 'isCorrect', 'timeSpent', 'timestamp'
+      ]);
+    }
+    
+    // ユーザープロフィール（users コレクション）
+    match /users/{userId} {
+      // 読み取り：自分のデータのみ
+      allow read: if isOwner(userId);
+      
+      // 作成：認証済みユーザーが自分のデータを作成
+      allow create: if isOwner(userId) && hasRequiredUserFields();
+      
+      // 更新：自分のデータのみ、uidとemailは変更不可
+      allow update: if isOwner(userId) && 
+                       request.resource.data.uid == resource.data.uid &&
+                       request.resource.data.email == resource.data.email;
+      
+      // 削除：自分のデータのみ
+      allow delete: if isOwner(userId);
+    }
+    
+    // 学習統計（stats コレクション）
+    match /stats/{userId} {
+      // 読み取り：自分のデータのみ
+      allow read: if isOwner(userId);
+      
+      // 作成：認証済みユーザーが自分のデータを作成
+      allow create: if isOwner(userId) && hasRequiredStatsFields();
+      
+      // 更新：自分のデータのみ、uidは変更不可
+      allow update: if isOwner(userId) && 
+                       request.resource.data.uid == resource.data.uid;
+      
+      // 削除：自分のデータのみ
+      allow delete: if isOwner(userId);
+    }
+    
+    // 学習セッション（studySessions コレクション）
+    match /studySessions/{sessionId} {
+      // 読み取り：自分のセッションのみ
+      allow read: if isDataOwner();
+      
+      // 作成：認証済みユーザーが自分のセッションを作成
+      allow create: if isNewDataOwner() && hasRequiredSessionFields();
+      
+      // 更新：禁止（学習記録は変更不可）
+      allow update: if false;
+      
+      // 削除：自分のセッションのみ
+      allow delete: if isDataOwner();
+    }
+    
+    // ○×問題の結果（trueFalseResults コレクション）
+    match /trueFalseResults/{resultId} {
+      // 読み取り：自分の結果のみ
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid;
+      
+      // 作成：認証済みユーザーが自分の結果を作成
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.keys().hasAll([
+                         'userId', 'totalQuestions', 'correctCount', 
+                         'accuracy', 'completedAt'
+                       ]);
+      
+      // 更新：禁止（結果は変更不可）
+      allow update: if false;
+      
+      // 削除：自分の結果のみ
+      allow delete: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
+    }
+    
+    // 模試結果（mockExamResults コレクション）
+    match /mockExamResults/{resultId} {
+      // 読み取り：自分の結果のみ
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid;
+      
+      // 作成：認証済みユーザーが自分の結果を作成
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.keys().hasAll([
+                         'userId', 'score', 'totalQuestions', 'percentage',
+                         'isPassed', 'timeUsed', 'categoryStats', 'completedAt'
+                       ]);
+      
+      // 更新：禁止（結果は変更不可）
+      allow update: if false;
+      
+      // 削除：自分の結果のみ
+      allow delete: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
+    }
+    
+    // 学習プラン（studyPlans コレクション）- 将来の実装用
+    match /studyPlans/{planId} {
+      // 読み取り：自分のプランのみ
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid;
+      
+      // 作成：認証済みユーザーが自分のプランを作成
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid;
+      
+      // 更新：自分のプランのみ
+      allow update: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
+      
+      // 削除：自分のプランのみ
+      allow delete: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
+    }
+    
+    // 学習ノート（studyNotes コレクション）- 将来の実装用
+    match /studyNotes/{noteId} {
+      // 読み取り：自分のノートのみ
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid;
+      
+      // 作成：認証済みユーザーが自分のノートを作成
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid;
+      
+      // 更新：自分のノートのみ
+      allow update: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
+      
+      // 削除：自分のノートのみ
+      allow delete: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
+    }
+    
+    // ブックマーク（bookmarks コレクション）- 将来の実装用
+    match /bookmarks/{bookmarkId} {
+      // 読み取り：自分のブックマークのみ
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid;
+      
+      // 作成：認証済みユーザーが自分のブックマークを作成
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid;
+      
+      // 更新：自分のブックマークのみ
+      allow update: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
+      
+      // 削除：自分のブックマークのみ
+      allow delete: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
+    }
+    
+    // デフォルト：すべて拒否
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

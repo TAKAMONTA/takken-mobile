@@ -3,5 +3,9 @@
     "source": "functions",
     "predeploy": [],
     "runtime": "nodejs20"
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   }
 }
