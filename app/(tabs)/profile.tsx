@@ -33,8 +33,15 @@ export default function ProfileScreen() {
           text: 'ログアウト',
           style: 'destructive',
           onPress: async () => {
-            await logout();
-            router.replace('/');
+            try {
+              await logout();
+              // userがnullになるのを待ってからリダイレクト
+              setTimeout(() => {
+                router.replace('/');
+              }, 100);
+            } catch (error: any) {
+              Alert.alert('エラー', error.message);
+            }
           },
         },
       ]

@@ -3,6 +3,18 @@ import { db } from './firebase';
 import { Question } from './types';
 
 /**
+ * Fisher-Yatesアルゴリズムで配列をシャッフル
+ */
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+/**
  * Firestoreから指定カテゴリの問題を取得する
  */
 export async function getQuestionsByCategory(category: string): Promise<Question[]> {
@@ -32,7 +44,8 @@ export async function getQuestionsByCategory(category: string): Promise<Question
       });
     });
     
-    return questions;
+    // Fisher-Yatesシャッフルを適用
+    return shuffleArray(questions);
   } catch (error) {
     console.error('問題の取得に失敗しました:', error);
     throw error;
@@ -108,9 +121,8 @@ export async function getRandomQuestions(count: number, category?: string): Prom
       });
     });
     
-    // ランダムにシャッフルして指定数だけ返す
-    const shuffled = questions.sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, count);
+    // Fisher-Yatesシャッフルして指定数だけ返す
+    return shuffleArray(questions).slice(0, count);
   } catch (error) {
     console.error('問題の取得に失敗しました:', error);
     throw error;

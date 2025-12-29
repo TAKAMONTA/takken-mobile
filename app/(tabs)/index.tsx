@@ -2,8 +2,9 @@ import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Alert
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { useAuth } from '../../lib/AuthContext';
-import { getStudyStats, StudyStats, getUserProfile, UserProfile, getCategoryStats } from '../../lib/firestore-service';
+import { getStudyStats, StudyStats, getUserProfile, UserProfile, getCategoryStats, getRecentStudySessions, StudySession } from '../../lib/firestore-service';
 import { generateStudyAdvice } from '../../lib/ai-service';
+import { categoryInfo } from '../../lib/question-service';
 import { ZenColors, Spacing, FontSize, BorderRadius, Shadow } from '../../constants/Colors';
 
 export default function DashboardScreen() {
@@ -13,6 +14,7 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [aiAdvice, setAiAdvice] = useState<string | null>(null);
   const [loadingAdvice, setLoadingAdvice] = useState(false);
+  const [recentSessions, setRecentSessions] = useState<StudySession[]>([]);
 
   useEffect(() => {
     loadStats();
@@ -30,6 +32,10 @@ export default function DashboardScreen() {
       
       const userProfile = await getUserProfile(user.uid);
       setProfile(userProfile);
+      
+      // 最近の学習履歴を取得
+      const sessions = await getRecentStudySessions(user.uid, 5);
+      setRecentSessions(sessions);
     } catch (error) {
       console.error('Error loading stats:', error);
     } finally {
@@ -242,7 +248,37 @@ export default function DashboardScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>最近の学習</Text>
           <View style={styles.card}>
-            <Text style={styles.emptyText}>まだ学習履歴がありません</Text>
+            {recentSessions.length > 0 ? (
+              recentSessions.map((session, index) => (
+                <View key={session.id} style={[
+                  styles.historyItem,
+                  index < recentSessions.length - 1 && styles.historyItemBorder
+                ]}>
+                  <View style={styles.historyLeft}>
+                    <Text style={styles.historyCategory}>
+                      {categoryInfo[session.category]?.name || session.category}
+                    </Text>
+                    <Text style={styles.historyTime}>
+                      {session.timestamp.toLocaleDateString('ja-JP')}
+                    </Text>
+                  </View>
+                  <View style={[
+                    styles.historyResult,
+                    { backgroundColor: session.isCorrect ? '#E8F5E9' : '#FFEBEE' }
+                  ]}>
+                    <Text style={{
+                      color: session.isCorrect ? '#2E7D32' : '#C62828',
+                      fontWeight: '600',
+                      fontSize: FontSize.sm,
+                    }}>
+                      {session.isCorrect ? '正解' : '不正解'}
+                    </Text>
+                  </View>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.emptyText}>まだ学習履歴がありません</Text>
+            )}
           </View>
         </View>
       </View>
@@ -415,5 +451,33 @@ const styles = StyleSheet.create({
     color: ZenColors.text.secondary,
     fontSize: FontSize.sm,
     fontWeight: '600',
+  },
+  historyItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+  },
+  historyItemBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: ZenColors.border,
+  },
+  historyLeft: {
+    flex: 1,
+  },
+  historyCategory: {
+    fontSize: FontSize.md,
+    fontWeight: '600',
+    color: ZenColors.text.primary,
+  },
+  historyTime: {
+    fontSize: FontSize.sm,
+    color: ZenColors.text.secondary,
+    marginTop: 2,
+  },
+  historyResult: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.sm,
   },
 });
