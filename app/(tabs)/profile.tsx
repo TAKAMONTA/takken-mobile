@@ -109,7 +109,7 @@ export default function ProfileScreen() {
                 ]}
                 onPress={() => router.push('/subscription')}
               >
-                <Text style={styles.buttonText}>月額￥980で始める</Text>
+                <Text style={styles.buttonText}>月額¥1,000で始める</Text>
               </Pressable>
             </View>
           </View>

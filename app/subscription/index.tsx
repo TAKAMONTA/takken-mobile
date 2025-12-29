@@ -1,18 +1,25 @@
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import { useState } from 'react';
 import { router } from 'expo-router';
 import { useAuth } from '../../lib/AuthContext';
 import { updatePremiumStatus } from '../../lib/firestore-service';
 import { ZenColors, Spacing, FontSize, BorderRadius, Shadow } from '../../constants/Colors';
 
+type PlanType = 'monthly' | 'yearly';
+
 export default function SubscriptionScreen() {
   const { user } = useAuth();
+  const [selectedPlan, setSelectedPlan] = useState<PlanType>('yearly');
 
   const handleSubscribe = async () => {
+    const planName = selectedPlan === 'monthly' ? '月額プラン' : '年間プラン';
+    const price = selectedPlan === 'monthly' ? '¥1,000' : '¥10,000';
+    
     // TODO: 実際の決済処理を実装
     // 現在はデモとして即座にプレミアムステータスを付与
     Alert.alert(
       '確認',
-      '月額プランに登録しますか？\n\n※現在はデモモードです。実際の課金は発生しません。',
+      `${planName}（${price}）に登録しますか？\n\n※現在はデモモードです。実際の課金は発生しません。`,
       [
         { text: 'キャンセル', style: 'cancel' },
         {
@@ -89,28 +96,69 @@ export default function SubscriptionScreen() {
         {/* プラン選択 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>プランを選択</Text>
-          <View style={styles.planCard}>
+          
+          {/* 年間プラン */}
+          <Pressable
+            style={[
+              styles.planCard,
+              selectedPlan === 'yearly' && styles.planCardSelected,
+            ]}
+            onPress={() => setSelectedPlan('yearly')}
+          >
             <View style={styles.planHeader}>
-              <Text style={styles.planName}>月額プラン</Text>
+              <Text style={styles.planName}>年間プラン</Text>
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>おすすめ</Text>
+                <Text style={styles.badgeText}>2ヶ月分お得</Text>
               </View>
             </View>
             <View style={styles.priceContainer}>
-              <Text style={styles.price}>¥980</Text>
+              <Text style={styles.price}>¥10,000</Text>
+              <Text style={styles.priceUnit}>/年</Text>
+            </View>
+            <Text style={styles.planDescription}>月額換算 約¥833（17%割引）</Text>
+            {selectedPlan === 'yearly' && (
+              <View style={styles.selectedIndicator}>
+                <Text style={styles.selectedText}>✓ 選択中</Text>
+              </View>
+            )}
+          </Pressable>
+
+          {/* 月額プラン */}
+          <Pressable
+            style={[
+              styles.planCard,
+              styles.planCardMarginTop,
+              selectedPlan === 'monthly' && styles.planCardSelected,
+            ]}
+            onPress={() => setSelectedPlan('monthly')}
+          >
+            <View style={styles.planHeader}>
+              <Text style={styles.planName}>月額プラン</Text>
+            </View>
+            <View style={styles.priceContainer}>
+              <Text style={styles.price}>¥1,000</Text>
               <Text style={styles.priceUnit}>/月</Text>
             </View>
             <Text style={styles.planDescription}>いつでもキャンセル可能</Text>
-            <Pressable
-              style={({ pressed }) => [
-                styles.subscribeButton,
-                pressed && styles.buttonPressed,
-              ]}
-              onPress={handleSubscribe}
-            >
-              <Text style={styles.subscribeButtonText}>月額プランで始める</Text>
-            </Pressable>
-          </View>
+            {selectedPlan === 'monthly' && (
+              <View style={styles.selectedIndicator}>
+                <Text style={styles.selectedText}>✓ 選択中</Text>
+              </View>
+            )}
+          </Pressable>
+
+          {/* 登録ボタン */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.subscribeButton,
+              pressed && styles.buttonPressed,
+            ]}
+            onPress={handleSubscribe}
+          >
+            <Text style={styles.subscribeButtonText}>
+              {selectedPlan === 'monthly' ? '月額プランで始める' : '年間プランで始める'}
+            </Text>
+          </Pressable>
         </View>
 
         {/* 注意事項 */}
@@ -209,8 +257,15 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
     borderWidth: 2,
+    borderColor: ZenColors.border,
+    ...Shadow.sm,
+  },
+  planCardSelected: {
     borderColor: ZenColors.primary,
     ...Shadow.md,
+  },
+  planCardMarginTop: {
+    marginTop: Spacing.md,
   },
   planHeader: {
     flexDirection: 'row',
@@ -252,7 +307,19 @@ const styles = StyleSheet.create({
   planDescription: {
     fontSize: FontSize.md,
     color: ZenColors.text.secondary,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+  selectedIndicator: {
+    backgroundColor: ZenColors.primary,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    alignSelf: 'flex-start',
+  },
+  selectedText: {
+    fontSize: FontSize.sm,
+    fontWeight: '600',
+    color: ZenColors.text.inverse,
   },
   subscribeButton: {
     backgroundColor: ZenColors.primary,
@@ -260,6 +327,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     borderRadius: BorderRadius.lg,
     alignItems: 'center',
+    marginTop: Spacing.lg,
     ...Shadow.md,
   },
   buttonPressed: {
