@@ -15,6 +15,7 @@ export default function DashboardScreen() {
   const [aiAdvice, setAiAdvice] = useState<string | null>(null);
   const [loadingAdvice, setLoadingAdvice] = useState(false);
   const [recentSessions, setRecentSessions] = useState<StudySession[]>([]);
+  const [categoryStats, setCategoryStats] = useState<any>({});
 
   useEffect(() => {
     loadStats();
@@ -32,6 +33,15 @@ export default function DashboardScreen() {
       
       const userProfile = await getUserProfile(user.uid);
       setProfile(userProfile);
+
+      // 分野別統計（分析ページと同じロジック）
+      const categories = ['takkengyouhou', 'minpou', 'hourei', 'zeihou'];
+      const categoryData: any = {};
+      for (const category of categories) {
+        const catStats = await getCategoryStats(user.uid, category);
+        categoryData[category] = catStats;
+      }
+      setCategoryStats(categoryData);
       
       // 最近の学習履歴を取得
       const sessions = await getRecentStudySessions(user.uid, 5);
@@ -57,6 +67,22 @@ export default function DashboardScreen() {
     return Math.round((stats.correctAnswers / stats.totalQuestions) * 100);
   };
 
+  const getCategoryAccuracy = (category: string): number => {
+    const catStats = categoryStats[category];
+    if (!catStats || catStats.totalQuestions === 0) return 0;
+    return Math.round((catStats.correctAnswers / catStats.totalQuestions) * 100);
+  };
+
+  const getCategoryName = (category: string): string => {
+    const names: any = {
+      takkengyouhou: '宅建業法',
+      minpou: '民法等',
+      hourei: '法令上の制限',
+      zeihou: '税・その他',
+    };
+    return names[category] || category;
+  };
+
   const handleGetAIAdvice = async () => {
     if (!profile?.isPremium) {
       Alert.alert('プレミアム機能', 'AI学習アドバイザーはプレミアムプラン限定です', [
@@ -70,16 +96,24 @@ export default function DashboardScreen() {
 
     setLoadingAdvice(true);
     try {
-      const categoryStats = await getCategoryStats(user.uid);
+      const categories = ['takkengyouhou', 'minpou', 'hourei', 'zeihou'];
+      const categoryStatsForAI = categories.map((category) => {
+        const catStats = categoryStats?.[category] || { totalQuestions: 0, correctAnswers: 0 };
+        const correctRate = catStats.totalQuestions > 0
+          ? Math.round((catStats.correctAnswers / catStats.totalQuestions) * 100)
+          : 0;
+        return {
+          category: getCategoryName(category),
+          correctRate,
+          count: catStats.totalQuestions || 0,
+        };
+      });
+
       const advice = await generateStudyAdvice({
         totalQuestions: stats.totalQuestions,
         correctRate: getAccuracyRate(),
         studyDays: stats.studyDays,
-        categoryStats: categoryStats.map(cat => ({
-          category: cat.category,
-          correctRate: cat.correctRate,
-          count: cat.totalQuestions,
-        })),
+        categoryStats: categoryStatsForAI,
       });
       setAiAdvice(advice);
     } catch (error) {
@@ -129,6 +163,42 @@ export default function DashboardScreen() {
           <View style={styles.card}>
             <Text style={styles.streakValue}>{stats?.currentStreak || 0}日</Text>
             <Text style={styles.streakLabel}>連続学習日数</Text>
+          </View>
+        </View>
+
+        {/* 分野別正答率（分析ページと統合） */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>分野別正答率</Text>
+          <View style={styles.card}>
+            {['takkengyouhou', 'minpou', 'hourei', 'zeihou'].map((category) => {
+              const accuracy = getCategoryAccuracy(category);
+              return (
+                <View key={category} style={styles.categoryRow}>
+                  <Text style={styles.categoryName}>{getCategoryName(category)}</Text>
+                  <View style={styles.progressBar}>
+                    <View style={[styles.progressFill, { width: `${accuracy}%` }]} />
+                  </View>
+                  <Text style={styles.percentage}>{accuracy}%</Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* 学習の進捗（分析ページと統合） */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>学習の進捗</Text>
+          <View style={styles.card}>
+            <Text style={styles.progressTitle}>全体の進捗</Text>
+            <View style={styles.largeProgressBar}>
+              <View
+                style={[
+                  styles.largeProgressFill,
+                  { width: `${Math.min(100, ((stats?.totalQuestions || 0) / 500) * 100)}%` },
+                ]}
+              />
+            </View>
+            <Text style={styles.progressText}>{stats?.totalQuestions || 0} / 500問</Text>
           </View>
         </View>
 
@@ -451,6 +521,53 @@ const styles = StyleSheet.create({
     color: ZenColors.text.secondary,
     fontSize: FontSize.sm,
     fontWeight: '600',
+  },
+  categoryRow: {
+    marginBottom: Spacing.md,
+  },
+  categoryName: {
+    fontSize: FontSize.md,
+    fontWeight: '600',
+    color: ZenColors.text.primary,
+    marginBottom: Spacing.xs,
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: ZenColors.gray[200],
+    borderRadius: BorderRadius.sm,
+    overflow: 'hidden',
+    marginBottom: Spacing.xs,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: ZenColors.primary,
+  },
+  percentage: {
+    fontSize: FontSize.sm,
+    color: ZenColors.text.secondary,
+    textAlign: 'right',
+  },
+  progressTitle: {
+    fontSize: FontSize.md,
+    fontWeight: '600',
+    color: ZenColors.text.primary,
+    marginBottom: Spacing.md,
+  },
+  largeProgressBar: {
+    height: 16,
+    backgroundColor: ZenColors.gray[200],
+    borderRadius: BorderRadius.md,
+    overflow: 'hidden',
+    marginBottom: Spacing.sm,
+  },
+  largeProgressFill: {
+    height: '100%',
+    backgroundColor: ZenColors.primary,
+  },
+  progressText: {
+    fontSize: FontSize.md,
+    color: ZenColors.text.secondary,
+    textAlign: 'center',
   },
   historyItem: {
     flexDirection: 'row',

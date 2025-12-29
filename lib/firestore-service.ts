@@ -228,19 +228,42 @@ export async function getRecentStudySessions(
   limitCount: number = 10
 ): Promise<StudySession[]> {
   const sessionsRef = collection(db, 'studySessions');
-  const q = query(
-    sessionsRef,
-    where('uid', '==', uid),
-    orderBy('timestamp', 'desc'),
-    limit(limitCount)
-  );
+  try {
+    const q = query(
+      sessionsRef,
+      where('uid', '==', uid),
+      orderBy('timestamp', 'desc'),
+      limit(limitCount)
+    );
 
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-    timestamp: doc.data().timestamp?.toDate() || new Date(),
-  } as StudySession));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      timestamp: doc.data().timestamp?.toDate() || new Date(),
+    } as StudySession));
+  } catch (error) {
+    // 複合インデックス未作成/作成中などで失敗した場合のフォールバック
+    // orderByなしで多めに取得 → クライアント側でtimestamp降順ソート → 上位N件を返す
+    console.warn('getRecentStudySessions failed, falling back to client-side sort:', error);
+
+    const fetchCount = Math.max(50, limitCount * 20);
+    const qFallback = query(
+      sessionsRef,
+      where('uid', '==', uid),
+      limit(fetchCount)
+    );
+
+    const querySnapshot = await getDocs(qFallback);
+    const sessions = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      timestamp: doc.data().timestamp?.toDate() || new Date(0),
+    } as StudySession));
+
+    sessions.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    return sessions.slice(0, limitCount);
+  }
 }
 
 // プレミアムプランの更新

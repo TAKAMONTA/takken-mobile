@@ -35,7 +35,7 @@ export default function StatsScreen() {
       setIsPremium(profile?.isPremium || false);
       
       // Load category stats
-      const categories = ['takkengyouhou', 'minpou', 'hourei', 'zei'];
+      const categories = ['takkengyouhou', 'minpou', 'hourei', 'zeihou'];
       const categoryData: any = {};
       for (const category of categories) {
         const catStats = await getCategoryStats(user.uid, category);
@@ -124,7 +124,7 @@ export default function StatsScreen() {
       takkengyouhou: '宅建業法',
       minpou: '民法等',
       hourei: '法令上の制限',
-      zei: '税・その他',
+      zeihou: '税・その他',
     };
     return names[category] || category;
   };
@@ -169,7 +169,7 @@ export default function StatsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>分野別正答率</Text>
           <View style={styles.card}>
-            {['takkengyouhou', 'minpou', 'hourei', 'zei'].map((category) => {
+            {['takkengyouhou', 'minpou', 'hourei', 'zeihou'].map((category) => {
               const accuracy = getCategoryAccuracy(category);
               return (
                 <View key={category} style={styles.categoryRow}>
@@ -305,7 +305,7 @@ export default function StatsScreen() {
           <View style={styles.card}>
             {stats && stats.totalQuestions > 0 ? (
               <View>
-                {['takkengyouhou', 'minpou', 'hourei', 'zei']
+                {['takkengyouhou', 'minpou', 'hourei', 'zeihou']
                   .map((category) => ({
                     category,
                     accuracy: getCategoryAccuracy(category),
@@ -319,7 +319,7 @@ export default function StatsScreen() {
                       <Text style={styles.weaknessAccuracy}>{item.accuracy}%</Text>
                     </View>
                   ))}
-                {['takkengyouhou', 'minpou', 'hourei', 'zei'].every(
+                {['takkengyouhou', 'minpou', 'hourei', 'zeihou'].every(
                   (cat) => getCategoryAccuracy(cat) >= 70 || categoryStats[cat]?.totalQuestions === 0
                 ) && (
                   <Text style={styles.emptyText}>弱点分野はありません</Text>
