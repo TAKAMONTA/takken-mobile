@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Pressable, Alert } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../lib/AuthContext';
 import { getStudyStats, StudyStats, getCategoryStats, getIncorrectQuestions, getUserProfile, getTrueFalseQuizResults, TrueFalseQuizResult } from '../../lib/firestore-service';
 import { analyzeWeaknesses } from '../../lib/ai-service';
@@ -17,16 +18,13 @@ export default function StatsScreen() {
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [trueFalseResults, setTrueFalseResults] = useState<TrueFalseQuizResult[]>([]);
 
-  useEffect(() => {
-    loadStats();
-  }, [user]);
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     if (!user) {
       setLoading(false);
       return;
     }
 
+    setLoading(true);
     try {
       const userStats = await getStudyStats(user.uid);
       setStats(userStats);
@@ -51,7 +49,14 @@ export default function StatsScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  // タブに戻ったタイミングで必ず最新データを再取得
+  useFocusEffect(
+    useCallback(() => {
+      loadStats();
+    }, [loadStats])
+  );
 
   const handleGetAIAnalysis = async () => {
     if (!isPremium) {
