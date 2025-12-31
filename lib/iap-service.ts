@@ -19,8 +19,8 @@ const functions = getFunctions(app);
 
 // App Store Connect で設定する商品ID
 export const PRODUCT_IDS = {
-  PREMIUM_MONTHLY: 'com.takken.premium.monthly',
-  PREMIUM_YEARLY: 'com.takken.premium.yearly',
+  PREMIUM_MONTHLY: 'com.takamonta.takken.premium.monthly.v2',
+  PREMIUM_YEARLY: 'com.takamonta.takken.premium.yearly.v2',
 };
 
 export interface SubscriptionProduct {
